@@ -1,0 +1,66 @@
+{
+	"name": "@typescord/core",
+	"description": "A powerful TypeScript library for interacting with the Discord API.",
+	"version": "0.0.0",
+	"main": "build/index.js",
+	"prettier": "@typescord/prettier-config",
+	"scripts": {
+		"prepublish": "yarn build",
+		"build": "rimraf build && tsc -p tsconfig.prod.json",
+		"lint": "eslint src --ext ts",
+		"lint-fix": "yarn lint --fix",
+		"format": "prettier . --write",
+		"mrm": "mrm --preset @typescord/mrm-preset"
+	},
+	"engines": {
+		"node": ">=15.0.0"
+	},
+	"author": "Typescord",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/typescord/core.git"
+	},
+	"homepage": "https://github.com/typescord/core#readme",
+	"bugs": {
+		"url": "https://github.com/typescord/core/issues"
+	},
+	"devDependencies": {
+		"@types/jest": "^26.0.21",
+		"@types/node": "^14.14.35",
+		"@typescord/eslint-config": "^0.2.0",
+		"@typescord/mrm-preset": "^2.1.0",
+		"@typescord/prettier-config": "^0.1.2",
+		"@typescript-eslint/eslint-plugin": "^4.18.0",
+		"@typescript-eslint/parser": "^4.18.0",
+		"eslint": "^7.22.0",
+		"eslint-config-prettier": "^7.2.0",
+		"eslint-import-resolver-node": "^0.3.4",
+		"eslint-plugin-import": "^2.22.1",
+		"eslint-plugin-prettier": "^3.3.1",
+		"eslint-plugin-simple-import-sort": "^7.0.0",
+		"eslint-plugin-sonarjs": "^0.6.0",
+		"eslint-plugin-unicorn": "^28.0.2",
+		"jest": "^26.6.3",
+		"mrm": "^2.6.0",
+		"prettier": "^2.2.1",
+		"rimraf": "^3.0.2",
+		"ts-jest": "^26.5.4",
+		"typescript": "^4.2.3"
+	},
+	"files": [
+		"build"
+	],
+	"jest": {
+		"preset": "ts-jest",
+		"testEnvironment": "node"
+	},
+	"keywords": [
+		"discord",
+		"api",
+		"bot",
+		"client",
+		"node",
+		"discordapp"
+	]
+}
