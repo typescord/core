@@ -1,0 +1,31 @@
+name: Continuous Integration
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['*.{md,txt}', LICENSE, .*config, .vscode]
+    tags-ignore: ['*']
+  pull_request:
+    branches: ['*']
+    paths-ignore: ['*.{md,txt}', LICENSE, .*config, .vscode]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: 15
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Test
+        run: yarn test
+
+      - name: Build
+        run: yarn build --noEmit
