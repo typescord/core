@@ -1,0 +1,14 @@
+root: true
+parser: '@typescript-eslint/parser'
+plugins: ['@typescript-eslint', prettier]
+extends: [eslint:recommended, 'plugin:@typescript-eslint/recommended', plugin:prettier/recommended]
+rules:
+  quotes: 0
+  '@typescript-eslint/quotes': [error, single]
+  semi: 0
+  '@typescript-eslint/semi': error
+  '@typescript-eslint/no-non-null-assertion': off
+  '@typescript-eslint/explicit-member-accessibility': error
+env:
+  node: true
+  es2020: true
