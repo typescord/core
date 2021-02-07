@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.prod.json",
     "lint": "eslint . --ext ts",
-    "format": "yarn lint --fix",
+    "lint-fix": "yarn lint --fix",
     "test": "jest"
   },
   "devDependencies": {

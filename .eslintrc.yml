@@ -4,8 +4,9 @@ plugins: ['@typescript-eslint', prettier]
 extends: [eslint:recommended, 'plugin:@typescript-eslint/recommended', plugin:prettier/recommended]
 rules:
   quotes: 0
-  '@typescript-eslint/quotes': [error, single]
+  '@typescript-eslint/quotes': [error, single, avoidEscape: true]
   semi: 0
+  eol-last: 2
   '@typescript-eslint/semi': error
   '@typescript-eslint/no-non-null-assertion': off
   '@typescript-eslint/explicit-member-accessibility': error
