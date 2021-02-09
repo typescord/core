@@ -16,7 +16,7 @@ pids
 *.pid.lock
 
 # Dependency directories
-node_modules/
+node_modules
 
 # TypeScript cache
 *.tsbuildinfo
@@ -32,6 +32,8 @@ node_modules/
 
 # Output of 'npm pack'
 *.tgz
+
+build
 
 # Yarn 2
 .yarn/*
