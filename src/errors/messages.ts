@@ -1,4 +1,6 @@
 const _messages = {
+  CLIENT_ALREADY_DESTROYED: 'The Client is already destroyed.',
+  CLIENT_DESTROYED_TIMER: 'You cannot set a Timer because the Client is destroyed.',
   CLIENT_INVALID_OPTION: (prop: string, must: string) => `The ${prop} option must be ${must}`,
   CLIENT_INVALID_PROVIDED_SHARDS: 'None of the provided shards were valid.',
   TOKEN_INVALID: 'An invalid token was provided.',
