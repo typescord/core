@@ -15,7 +15,8 @@ export class BaseClient extends EventEmitter {
     super();
   }
 
-  public setImmediate<T extends unknown[]>(callback: (...args: T) => void, ...args: T): NodeJS.Immediate {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public setImmediate<T extends any[]>(callback: (...args: T) => void, ...args: T): NodeJS.Immediate {
     if (this.destroyed) {
       throw new Error('CLIENT_DESTROYED_TIMER');
     }
@@ -31,6 +32,7 @@ export class BaseClient extends EventEmitter {
     return immediate;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public setTimeout<T extends any[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
     if (this.destroyed) {
       throw new Error('CLIENT_DESTROYED_TIMER');
@@ -47,6 +49,7 @@ export class BaseClient extends EventEmitter {
     return timeout;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public setInterval<T extends any[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
     if (this.destroyed) {
       throw new Error('CLIENT_DESTROYED_TIMER');
