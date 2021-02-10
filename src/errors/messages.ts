@@ -1,4 +1,6 @@
 const _messages = {
+  CLIENT_ALREADY_DESTROYED: 'The Client is already destroyed.',
+  CLIENT_DESTROYED_TIMER: 'You cannot set a Timer because the Client is destroyed.',
   CLIENT_INVALID_OPTION: (prop: string, must: string) => `The ${prop} option must be ${must}`,
   CLIENT_INVALID_PROVIDED_SHARDS: 'None of the provided shards were valid.',
   TOKEN_INVALID: 'An invalid token was provided.',
@@ -82,8 +84,9 @@ export type MessagesKeys = keyof typeof _messages;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const messages = new Map<MessagesKeys, string | ((...args: any[]) => string)>();
-for (const [k, v] of Object.entries(_messages)) {
-  messages.set(k as MessagesKeys, v);
+
+for (const [key, value] of Object.entries(_messages)) {
+  messages.set(key as MessagesKeys, value);
 }
 
-export default messages;
+export { messages };
