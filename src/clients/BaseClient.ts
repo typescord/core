@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { Error } from '../errors';
+
 export interface BaseClientOptions {
   token?: string;
 }
@@ -18,11 +19,15 @@ export class BaseClient extends EventEmitter {
     if (this.destroyed) {
       throw new Error('CLIENT_DESTROYED_TIMER');
     }
+
     const immediate = setImmediate(() => {
       this.immediates.delete(immediate);
+
       callback(...args);
     });
+
     this.immediates.add(immediate);
+
     return immediate;
   }
 
@@ -30,11 +35,15 @@ export class BaseClient extends EventEmitter {
     if (this.destroyed) {
       throw new Error('CLIENT_DESTROYED_TIMER');
     }
+
     const timeout = setTimeout(() => {
       this.timeouts.delete(timeout);
+
       callback(...args);
     }, ms);
+
     this.timeouts.add(timeout);
+
     return timeout;
   }
 
@@ -42,8 +51,11 @@ export class BaseClient extends EventEmitter {
     if (this.destroyed) {
       throw new Error('CLIENT_DESTROYED_TIMER');
     }
+
     const interval = setInterval(callback, ms, ...args);
+
     this.intervals.add(interval);
+
     return interval;
   }
 
@@ -51,10 +63,13 @@ export class BaseClient extends EventEmitter {
     if (this.destroyed) {
       throw new Error('CLIENT_ALREADY_DESTROYED');
     }
+
     this.destroyed = true;
+
     this.intervals.forEach(clearInterval);
     this.timeouts.forEach(clearTimeout);
     this.immediates.forEach(clearImmediate);
+
     this.intervals.clear();
     this.timeouts.clear();
     this.immediates.clear();
