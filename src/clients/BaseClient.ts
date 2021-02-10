@@ -15,7 +15,7 @@ export class BaseClient extends EventEmitter {
     super();
   }
 
-  public setImmediate<T>(callback: (...args: T) => void, ...args: T): NodeJS.Immediate {
+  public setImmediate<T extends unknown[]>(callback: (...args: T) => void, ...args: T): NodeJS.Immediate {
     if (this.destroyed) {
       throw new Error('CLIENT_DESTROYED_TIMER');
     }
@@ -31,7 +31,7 @@ export class BaseClient extends EventEmitter {
     return immediate;
   }
 
-  public setTimeout<T>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
+  public setTimeout<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
     if (this.destroyed) {
       throw new Error('CLIENT_DESTROYED_TIMER');
     }
@@ -47,12 +47,14 @@ export class BaseClient extends EventEmitter {
     return timeout;
   }
 
-  public setInterval<T>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
+  public setInterval<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
     if (this.destroyed) {
       throw new Error('CLIENT_DESTROYED_TIMER');
     }
 
-    const interval = setInterval(callback, ms, ...args);
+    const interval = setInterval(() => {
+      callback(...args);
+    }, ms);
 
     this.intervals.add(interval);
 
