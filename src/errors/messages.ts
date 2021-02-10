@@ -83,9 +83,10 @@ const _messages = {
 export type MessagesKeys = keyof typeof _messages;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const messages = new Map<MessagesKeys, string | ((...args: any[]) => string)>();
-for (const [k, v] of Object.entries(_messages)) {
-  messages.set(k as MessagesKeys, v);
+const messages = new Map<MessagesKeys, string | ((...args: unknown[]) => string)>();
+
+for (const [key, value] of Object.entries(_messages)) {
+  messages.set(key as MessagesKeys, value);
 }
 
-export default messages;
+export { messages };
