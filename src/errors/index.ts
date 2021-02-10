@@ -1,6 +1,6 @@
 // Heavily inspired by node's `internal/errors` module
 
-import messages, { MessagesKeys } from './messages';
+import { messages, MessagesKeys } from './messages';
 const kCode = Symbol('code');
 
 function makeError(Base: ErrorConstructor) {
