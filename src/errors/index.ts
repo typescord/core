@@ -11,7 +11,6 @@ function makeError(Base: ErrorConstructor) {
 
     public constructor(key: MessagesKeys, ...args: unknown[]) {
       super(description(key, args));
-
       this[kCode] = key;
     }
   };
@@ -23,13 +22,11 @@ function description(key: MessagesKeys, ...args: unknown[]): string {
   if (typeof message === 'function') {
     return message(...args);
   }
-
   if (!args) {
     return message!;
   }
 
   args.unshift(message);
-
   return args.join(' ');
 }
 
