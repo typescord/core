@@ -19,15 +19,15 @@ function makeError(Base: ErrorConstructor) {
 
 function description(key: MessagesKeys, ...args: unknown[]): string {
   const message = messages.get(key);
-  
+
   if (typeof message === 'function') {
     return message(...args);
   }
-  
+
   if (!args) {
     return message!;
   }
-  
+
   args.unshift(message);
 
   return args.join(' ');
@@ -36,4 +36,5 @@ function description(key: MessagesKeys, ...args: unknown[]): string {
 const _Error = makeError(Error);
 const _TypeError = makeError(TypeError);
 const _RangeError = makeError(RangeError);
+
 export { _Error as Error, _TypeError as TypeError, _RangeError as RangeError };
