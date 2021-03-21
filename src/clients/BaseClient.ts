@@ -1,76 +1,143 @@
 /* eslint-disable unicorn/no-array-for-each, unicorn/no-array-callback-reference */
 
 import { EventEmitter } from 'events';
-import { Exception } from '../errors';
+import merge from 'lodash.merge';
+import { DeepRequired } from '../utils/types';
+import { RestManager, Routes } from '../http';
+
+export type TokenType = 'Bot' | 'Bearer';
+
+const kImmediates = Symbol('kImmediates');
+const kTimeouts = Symbol('kTimeouts');
+const kIntervals = Symbol('kIntervals');
+
+export interface BaseClientOptions {
+	http: {
+		/**
+		 * The timeout of http requests, in milliseconds.
+		 * @default 10000
+		 */
+		requestTimeout?: number;
+		/**
+		 * How frequently to delete inactive request buckets, in milliseconds (or Infinity for never).
+		 * @default 60000
+		 */
+		sweepInterval?: number;
+		/**
+		 * The number of times to retry a failed http request.
+		 * @default 2
+		 */
+		retryLimit?: number;
+		/**
+		 * Time in milliseconds to add for requets (rate limit handling).
+		 * A higher value will reduce rate limit errors.
+		 * @default 0
+		 */
+		timeOffset?: number;
+		/**
+		 * If HTTP/2 should be used instead of HTTP/1.1.
+		 * It will choose either HTTP/1.1 or HTTP/2 depending on the ALPN protocol.
+		 * @default false
+		 */
+		http2?: boolean;
+		/**
+		 * The Discord API url.
+		 * @default 'https://discord.com/api/v8'
+		 */
+		api?: string;
+	};
+}
+
+const defaultOptions: DeepRequired<BaseClientOptions> = {
+	http: {
+		requestTimeout: 10000,
+		sweepInterval: 60000,
+		retryLimit: 2,
+		timeOffset: 0,
+		http2: false,
+		api: 'https://discord.com/api/v8',
+	},
+};
 
 export class BaseClient extends EventEmitter {
-	private immediates = new Set<NodeJS.Immediate>();
-	private timeouts = new Set<NodeJS.Timeout>();
-	private intervals = new Set<NodeJS.Timeout>();
-	private destroyed = false;
+	private readonly [kImmediates] = new Set<NodeJS.Immediate>();
+	private readonly [kTimeouts] = new Set<NodeJS.Timeout>();
+	private readonly [kIntervals] = new Set<NodeJS.Timeout>();
 
-	protected constructor() {
+	public readonly options: DeepRequired<BaseClientOptions>;
+	public readonly rest: RestManager;
+	public destroyed = false;
+	public token?: string;
+
+	protected constructor(public readonly tokenType: TokenType, options?: BaseClientOptions) {
 		super();
+		this.options = options ? merge(defaultOptions, options) : defaultOptions;
+		this.rest = new RestManager(this);
+	}
+
+	public get api(): Routes {
+		return this.rest.api;
 	}
 
 	public setImmediate<T extends unknown[]>(callback: (...args: T) => void, ...args: T): NodeJS.Immediate {
-		if (this.destroyed) {
-			throw new Exception('CLIENT_DESTROYED_TIMER');
-		}
-
-		const immediate = setImmediate(() => {
-			this.immediates.delete(immediate);
-
+		const immediateId = setImmediate(() => {
+			this[kImmediates].delete(immediateId);
 			callback(...args);
 		});
 
-		this.immediates.add(immediate);
+		this[kImmediates].add(immediateId);
+		return immediateId;
+	}
 
-		return immediate;
+	public clearImmediate(immediateId: NodeJS.Immediate): void {
+		if (!this[kImmediates].delete(immediateId)) {
+			return;
+		}
+
+		clearImmediate(immediateId);
 	}
 
 	public setTimeout<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
-		if (this.destroyed) {
-			throw new Exception('CLIENT_DESTROYED_TIMER');
-		}
-
-		const timeout = setTimeout(() => {
-			this.timeouts.delete(timeout);
+		const timeoutId = setTimeout(() => {
+			this[kTimeouts].delete(timeoutId);
 			callback(...args);
 		}, ms);
 
-		this.timeouts.add(timeout);
+		this[kTimeouts].add(timeoutId);
+		return timeoutId;
+	}
 
-		return timeout;
+	public clearTimeout(timeoutId: NodeJS.Timeout): void {
+		if (!this[kTimeouts].delete(timeoutId)) {
+			return;
+		}
+
+		clearTimeout(timeoutId);
 	}
 
 	public setInterval<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
-		if (this.destroyed) {
-			throw new Exception('CLIENT_DESTROYED_TIMER');
+		const intervalId = setInterval(() => callback(...args), ms);
+
+		this[kIntervals].add(intervalId);
+		return intervalId;
+	}
+
+	public clearInterval(intervalId: NodeJS.Timeout): void {
+		if (!this[kIntervals].delete(intervalId)) {
+			return;
 		}
 
-		const interval = setInterval(() => {
-			callback(...args);
-		}, ms);
-
-		this.intervals.add(interval);
-
-		return interval;
+		clearTimeout(intervalId);
 	}
 
 	public destroy(): void {
 		if (this.destroyed) {
-			throw new Exception('CLIENT_ALREADY_DESTROYED');
+			return;
 		}
-
 		this.destroyed = true;
 
-		this.intervals.forEach(clearInterval);
-		this.timeouts.forEach(clearTimeout);
-		this.immediates.forEach(clearImmediate);
-
-		this.intervals.clear();
-		this.timeouts.clear();
-		this.immediates.clear();
+		this[kIntervals].forEach(this.clearInterval, this);
+		this[kTimeouts].forEach(this.clearTimeout, this);
+		this[kImmediates].forEach(this.clearImmediate, this);
 	}
 }
