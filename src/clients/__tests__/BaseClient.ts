@@ -1,6 +1,5 @@
 import { promisify } from 'util';
 import { setTimeout as _setTimeout, setImmediate as _setImmediate } from 'timers';
-import { Exception } from '../../errors';
 import { BaseClient } from '../BaseClient';
 
 const setTimeout = promisify(_setTimeout);
@@ -9,7 +8,7 @@ const setImmediate = promisify(_setImmediate);
 // only for test
 class TestClient extends BaseClient {
 	public constructor() {
-		super();
+		super('Bot');
 	}
 }
 
@@ -37,11 +36,15 @@ describe(BaseClient.prototype.setImmediate, () => {
 		expect(handler).not.toHaveBeenCalled();
 	});
 
-	it('should throw a error if the Client is destroyed', () => {
+	it('should be cleared correctly', () => {
 		const client = new TestClient();
-		client.destroy();
+		const handler = jest.fn();
 
-		expect(() => client.setImmediate(noop)).toThrowError(new Exception('CLIENT_DESTROYED_TIMER'));
+		client.clearImmediate(client.setImmediate(handler, 1, '2', [3, 4]));
+
+		expect(handler).not.toHaveBeenCalled();
+		// @ts-expect-error i don't want to type this...
+		expect(client[Object.getOwnPropertySymbols(client)[1]].size).toStrictEqual(0);
 	});
 });
 
@@ -68,11 +71,15 @@ describe(BaseClient.prototype.setTimeout, () => {
 		expect(handler).not.toHaveBeenCalled();
 	});
 
-	it('should throw a error if the Client is destroyed', () => {
+	it('should be cleared correctly', () => {
 		const client = new TestClient();
-		client.destroy();
+		const handler = jest.fn();
 
-		expect(() => client.setTimeout(noop, 100)).toThrowError(new Exception('CLIENT_DESTROYED_TIMER'));
+		client.clearTimeout(client.setTimeout(handler, 100, '2', [3, 4]));
+
+		expect(handler).not.toHaveBeenCalled();
+		// @ts-expect-error i don't want to type this...
+		expect(client[Object.getOwnPropertySymbols(client)[2]].size).toStrictEqual(0);
 	});
 });
 
@@ -89,7 +96,7 @@ describe(BaseClient.prototype.setInterval, () => {
 		client.destroy();
 	});
 
-	it('should not fire Interval when the Client is destroyed', async () => {
+	it('should not fire when the Client is destroyed', async () => {
 		const client = new TestClient();
 		const handler = jest.fn();
 
@@ -100,19 +107,32 @@ describe(BaseClient.prototype.setInterval, () => {
 		expect(handler).not.toHaveBeenCalled();
 	});
 
-	it('should throw a error if the Client is destroyed', () => {
+	it('should be cleared correctly', () => {
 		const client = new TestClient();
-		client.destroy();
+		const handler = jest.fn();
 
-		expect(() => client.setInterval(noop, 100)).toThrowError(new Exception('CLIENT_DESTROYED_TIMER'));
+		client.clearInterval(client.setInterval(handler, 100, '2', [3, 4]));
+
+		expect(handler).not.toHaveBeenCalled();
+		// @ts-expect-error i don't want to type this...
+		expect(client[Object.getOwnPropertySymbols(client)[3]].size).toStrictEqual(0);
 	});
 });
 
 describe(BaseClient.prototype.destroy, () => {
-	it('should throw a error if the client is already destroyed', () => {
+	it('should clear all timers', () => {
 		const client = new TestClient();
+		client.setImmediate(noop);
+		client.setTimeout(noop, 10000);
+		client.setInterval(noop, 10000);
+
 		client.destroy();
 
-		expect(() => client.destroy()).toThrowError(new Exception('CLIENT_ALREADY_DESTROYED'));
+		expect(
+			Object.getOwnPropertySymbols(client)
+				.slice(1)
+				// @ts-expect-error i don't want to type this...
+				.map((symbol) => client[symbol].size),
+		).toStrictEqual([0, 0, 0]);
 	});
 });

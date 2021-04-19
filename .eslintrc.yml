@@ -5,6 +5,7 @@ parserOptions:
   project: tsconfig.json
 rules:
   prettier/prettier: error
+  import/no-unresolved: off
 env:
   node: true
   es2020: true
