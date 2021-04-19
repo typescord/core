@@ -90,11 +90,8 @@ export class BaseClient extends EventEmitter {
 	}
 
 	public clearImmediate(immediateId: NodeJS.Immediate): void {
-		if (!this[kImmediates].delete(immediateId)) {
-			return;
-		}
-
 		clearImmediate(immediateId);
+		this[kImmediates].delete(immediateId);
 	}
 
 	public setTimeout<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
@@ -108,11 +105,8 @@ export class BaseClient extends EventEmitter {
 	}
 
 	public clearTimeout(timeoutId: NodeJS.Timeout): void {
-		if (!this[kTimeouts].delete(timeoutId)) {
-			return;
-		}
-
 		clearTimeout(timeoutId);
+		this[kTimeouts].delete(timeoutId);
 	}
 
 	public setInterval<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
@@ -123,11 +117,8 @@ export class BaseClient extends EventEmitter {
 	}
 
 	public clearInterval(intervalId: NodeJS.Timeout): void {
-		if (!this[kIntervals].delete(intervalId)) {
-			return;
-		}
-
-		clearTimeout(intervalId);
+		clearInterval(intervalId);
+		this[kIntervals].delete(intervalId);
 	}
 
 	public destroy(): void {

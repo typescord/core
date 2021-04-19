@@ -8,7 +8,7 @@ const setImmediate = promisify(_setImmediate);
 // only for test
 class TestClient extends BaseClient {
 	public constructor() {
-		super('Bot');
+		super('Bot', { http: { sweepInterval: 0 } });
 	}
 }
 
@@ -111,7 +111,7 @@ describe(BaseClient.prototype.setInterval, () => {
 		const client = new TestClient();
 		const handler = jest.fn();
 
-		client.clearInterval(client.setInterval(handler, 100, '2', [3, 4]));
+		client.clearInterval(client.setInterval(handler, 1000, '2', [3, 4]));
 
 		expect(handler).not.toHaveBeenCalled();
 		// @ts-expect-error i don't want to type this...
