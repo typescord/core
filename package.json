@@ -14,7 +14,7 @@
 		"mrm": "mrm --preset @typescord/mrm-preset"
 	},
 	"engines": {
-		"node": ">=15.3.0"
+		"node": ">=15.3.0 <17"
 	},
 	"author": "Typescord",
 	"license": "MIT",
