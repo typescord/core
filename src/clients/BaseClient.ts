@@ -79,6 +79,10 @@ export class BaseClient extends EventEmitter {
 		return this.rest.api;
 	}
 
+	public get gateway(): string {
+		return this.options.http.api;
+	}
+
 	public setImmediate<T extends unknown[]>(callback: (...args: T) => void, ...args: T): NodeJS.Immediate {
 		const immediateId = setImmediate(() => {
 			this[kImmediates].delete(immediateId);
@@ -125,7 +129,9 @@ export class BaseClient extends EventEmitter {
 		if (this.destroyed) {
 			return;
 		}
+
 		this.destroyed = true;
+		this.token = undefined;
 
 		this[kIntervals].forEach(this.clearInterval, this);
 		this[kTimeouts].forEach(this.clearTimeout, this);
