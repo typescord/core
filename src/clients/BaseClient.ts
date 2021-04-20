@@ -46,6 +46,14 @@ export interface BaseClientOptions {
 		 */
 		api?: string;
 	};
+
+	ws?: {
+		/**
+		 * WebSocket protocol version
+		 * @default 13
+		 */
+		protocolVersion?: 8 | 13;
+	};
 }
 
 const defaultOptions: DeepRequired<BaseClientOptions> = {
@@ -56,6 +64,9 @@ const defaultOptions: DeepRequired<BaseClientOptions> = {
 		timeOffset: 0,
 		http2: false,
 		api: 'https://discord.com/api/v8',
+	},
+	ws: {
+		protocolVersion: 13,
 	},
 };
 
@@ -77,6 +88,10 @@ export class BaseClient extends EventEmitter {
 
 	public get api(): Routes {
 		return this.rest.api;
+	}
+
+	public get gateway(): string {
+		return this.options.http.api;
 	}
 
 	public setImmediate<T extends unknown[]>(callback: (...args: T) => void, ...args: T): NodeJS.Immediate {

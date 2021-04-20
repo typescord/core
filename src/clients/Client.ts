@@ -13,6 +13,9 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 		http2: true,
 		api: 'https://discord.com/api/v8',
 	},
+	ws: {
+		protocolVersion: 13,
+	},
 };
 
 export class Client extends BaseClient {

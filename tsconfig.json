@@ -7,7 +7,7 @@
 		"lib": ["ESNext"],
 		"outDir": "build",
 		"declaration": true,
-		"module": "CommonJS"
+		"module": "esnext"
 	},
 	"include": ["src/**/*.ts", "src/**/__tests__/**/*.ts"]
 }
