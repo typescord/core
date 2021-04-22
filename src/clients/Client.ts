@@ -3,7 +3,25 @@ import { WebSocketManager } from '../gateway/WebSocketManager';
 import { DeepRequired } from '../utils/types';
 import { BaseClient, BaseClientOptions } from './BaseClient';
 
-type ClientOptions = BaseClientOptions; // temporary
+type ClientOptions = BaseClientOptions & {
+	ws?: {
+		/**
+		 * URL of Discord's WebSocket gateway
+		 * @default 'wss://gateway.discord.gg/'
+		 */
+		gateway?: string;
+		/**
+		 * Discord's gateway version
+		 * @default 8
+		 */
+		version?: 7 | 8;
+		/**
+		 * Use of zlib compression/decompression
+		 * @default false
+		 */
+		zlib?: boolean;
+	};
+}; // temporary
 
 const defaultOptions: DeepRequired<ClientOptions> = {
 	http: {
@@ -15,7 +33,8 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 		api: 'https://discord.com/api/v8',
 	},
 	ws: {
-		protocolVersion: 8,
+		gateway: 'wss://gateway.discord.gg/', // temporary
+		version: 7,
 		zlib: false,
 	},
 };
@@ -32,16 +51,16 @@ export class Client extends BaseClient {
 		super.token = token;
 
 		try {
-      await this.webSocket.connect();
-    } catch (error) {
-      this.destroy();
+			await this.webSocket.connect();
+		} catch (error) {
+			this.destroy();
 
-      throw error;
-    }
+			throw error;
+		}
 	}
 
 	public destroy(): void {
-    super.destroy();
-    this.webSocket.destroy();
-  }
+		super.destroy();
+		this.webSocket.destroy();
+	}
 }

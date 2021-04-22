@@ -1,13 +1,14 @@
 import { EventEmitter } from 'events';
-import ws, { CloseEvent, ErrorEvent } from 'ws';
+import { constants, createInflate, Inflate } from 'zlib';
+import { platform } from 'os';
+import ws, { ErrorEvent } from 'ws';
 import * as dgateway from 'discord-api-types/gateway/v8';
 import { Client } from '../clients/Client';
 import { GatewayURLQuery, WebSocket } from './WebSocket';
-import { pack, unpack } from '.';
 import { Status, WebSocketManager } from './WebSocketManager';
-import { constants, createInflate, Inflate } from 'zlib';
+import { pack, unpack } from '.';
 
-export const enum WEBSOCKET_EVENTS {
+export const enum WebSocketEvents {
 	CLOSE = 'close',
 	DESTROYED = 'destroyed',
 	INVALID_SESSION = 'invalidSession',
@@ -36,7 +37,7 @@ export class WebSocketClient extends EventEmitter {
 	private chunks: Buffer[] = [];
 	private inflator?: Inflate;
 	private sequence = -1;
-	public sessionID?: string;
+	public sessionId?: string;
 	private expectedGuilds?: Set<string>;
 	private connectedAt?: number;
 	private lastHeartbeatAcked = true;
@@ -63,11 +64,11 @@ export class WebSocketClient extends EventEmitter {
 		}
 
 		return new Promise((resolve, reject) => {
-			this.once(WEBSOCKET_EVENTS.READY, () => resolve());
-			this.once(WEBSOCKET_EVENTS.RESUMED, () => resolve());
-			this.once(WEBSOCKET_EVENTS.CLOSE, (event: ws.CloseEvent) => reject(event));
-			this.once(WEBSOCKET_EVENTS.INVALID_SESSION, () => reject());
-			this.once(WEBSOCKET_EVENTS.DESTROYED, () => reject());
+			this.once(WebSocketEvents.READY, () => resolve());
+			this.once(WebSocketEvents.RESUMED, () => resolve());
+			this.once(WebSocketEvents.CLOSE, (event: ws.CloseEvent) => reject(event));
+			this.once(WebSocketEvents.INVALID_SESSION, () => reject());
+			this.once(WebSocketEvents.DESTROYED, () => reject());
 
 			if (this.connection?.readyState === ws.OPEN) {
 				this.identify();
@@ -79,7 +80,7 @@ export class WebSocketClient extends EventEmitter {
 				this.destroy();
 			}
 
-			const gatewayConnectQuery: GatewayURLQuery = { v: this.client.options.ws.protocolVersion };
+			const gatewayConnectQuery: GatewayURLQuery = { v: this.client.options.ws.version };
 
 			if (this.client.options.ws.zlib) {
 				this.inflator = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 65535 }).on(
@@ -97,8 +98,6 @@ export class WebSocketClient extends EventEmitter {
 			this.connection.addEventListener('message', this.onMessage.bind(this));
 			this.connection.addEventListener('error', this.onError.bind(this));
 			this.connection.addEventListener('close', this.onClose.bind(this));
-
-			console.log(this.connection)
 		});
 	}
 
@@ -126,10 +125,11 @@ export class WebSocketClient extends EventEmitter {
 
 		try {
 			this.onPacket(unpack(packet));
+			// eslint-disable-next-line no-empty
 		} catch {}
 	}
 
-	onError(event: ErrorEvent) {
+	private onError(event: ErrorEvent) {
 		const error = event.error ? event.error : event;
 
 		if (!error) {
@@ -139,7 +139,7 @@ export class WebSocketClient extends EventEmitter {
 		// this.client.emit(Events.SHARD_ERROR, error, this.id);
 	}
 
-	private onClose(event: CloseEvent) {
+	private onClose() {
 		if (this.sequence !== -1) {
 			this.closeSequence = this.sequence;
 		}
@@ -150,7 +150,7 @@ export class WebSocketClient extends EventEmitter {
 		this.setHelloTimeout(-1);
 
 		if (this.connection) {
-			this._cleanupConnection();
+			this.cleanupConnection();
 		}
 
 		this.status = Status.DISCONNECTED;
@@ -159,7 +159,7 @@ export class WebSocketClient extends EventEmitter {
 	}
 
 	private onPacket(
-		packet: dgateway.GatewaySendPayload | dgateway.GatewayReceivePayload | dgateway.GatewayDispatchPayload,
+		packet?: dgateway.GatewaySendPayload | dgateway.GatewayReceivePayload | dgateway.GatewayDispatchPayload,
 	): void {
 		if (!packet) {
 			return;
@@ -170,7 +170,7 @@ export class WebSocketClient extends EventEmitter {
 				case dgateway.GatewayDispatchEvents.Ready:
 					// this.emit(ShardEvents.RESUMED);
 
-					this.sessionID = packet.d.session_id;
+					this.sessionId = packet.d.session_id;
 					this.expectedGuilds = new Set(packet.d.guilds.map((guild) => guild.id));
 					this.status = Status.WAITING_FOR_GUILDS;
 					this.lastHeartbeatAcked = true;
@@ -214,7 +214,7 @@ export class WebSocketClient extends EventEmitter {
 				}
 
 				this.sequence = -1;
-				this.sessionID = undefined;
+				this.sessionId = undefined;
 				this.status = Status.RECONNECTING;
 
 				// this.emit(ShardEvents.INVALID_SESSION);
@@ -317,7 +317,7 @@ export class WebSocketClient extends EventEmitter {
 	}
 
 	private identify(): void {
-		return this.sessionID ? this.identifyResume() : this.identifyNew();
+		return this.sessionId ? this.identifyResume() : this.identifyNew();
 	}
 
 	private identifyNew(): void {
@@ -331,8 +331,14 @@ export class WebSocketClient extends EventEmitter {
 			{
 				op: dgateway.GatewayOPCodes.Identify,
 				d: {
-					...this.client.options.ws,
+					properties: {
+						$os: platform(),
+						$browser: 'typescord',
+						$device: 'typescord',
+					},
+					compress: this.client.options.ws.zlib,
 					token: this.client.token,
+					intent: 513, // temporary
 				},
 			},
 			true,
@@ -340,7 +346,7 @@ export class WebSocketClient extends EventEmitter {
 	}
 
 	private identifyResume(): void {
-		if (!this.sessionID) {
+		if (!this.sessionId) {
 			this.identifyNew();
 
 			return;
@@ -353,7 +359,7 @@ export class WebSocketClient extends EventEmitter {
 				op: dgateway.GatewayOPCodes.Resume,
 				d: {
 					token: this.client.token,
-					session_id: this.sessionID,
+					session_id: this.sessionId,
 					seq: this.closeSequence,
 				},
 			},
@@ -371,17 +377,18 @@ export class WebSocketClient extends EventEmitter {
 		this.processQueue();
 	}
 
-	private _send(data: any) {
+	private $send(data: any) {
 		if (!this.connection || this.connection.readyState !== WebSocket.OPEN) {
 			this.destroy({ closeCode: 4000 });
 
 			return;
 		}
 
-		this.connection.send(pack(data), () => {
-			/*if (err) {
-				this.client.emit(Events.SHARD_ERROR, err, this.id);
-			}*/
+		this.connection.send(pack(data), (error) => {
+			if (error) {
+				// this.client.emit(Events.SHARD_ERROR, err, this.id);
+				console.log(error);
+			}
 		});
 	}
 
@@ -405,7 +412,7 @@ export class WebSocketClient extends EventEmitter {
 				return;
 			}
 
-			this._send(item);
+			this.$send(item);
 
 			this.ratelimit.remaining--;
 		}
@@ -419,18 +426,19 @@ export class WebSocketClient extends EventEmitter {
 			if (this.connection.readyState === WebSocket.OPEN) {
 				this.connection.close(closeCode);
 			} else {
-				this._cleanupConnection();
+				this.cleanupConnection();
 
 				try {
 					this.connection.close(closeCode);
+					// eslint-disable-next-line no-empty
 				} catch {}
 
 				if (emit) {
-					this._emitDestroyed();
+					this.emitDestroyed();
 				}
 			}
 		} else if (emit) {
-			this._emitDestroyed();
+			this.emitDestroyed();
 		}
 
 		this.connection = undefined;
@@ -442,7 +450,7 @@ export class WebSocketClient extends EventEmitter {
 
 		if (reset) {
 			this.sequence = -1;
-			this.sessionID = undefined;
+			this.sessionId = undefined;
 		}
 
 		this.ratelimit.remaining = this.ratelimit.total;
@@ -455,15 +463,20 @@ export class WebSocketClient extends EventEmitter {
 		}
 	}
 
-	private _cleanupConnection(): void {
-		if (!this.connection) {
-			return;
-		}
+	private cleanupConnection(): void {
+		this.connection?.addEventListener('open', () => {
+			if (!this.connection) {
+				return;
+			}
 
-		this.connection.onopen = this.connection.onclose = this.connection.onerror = this.connection.onmessage = () => {};
+			this.connection.removeAllListeners('open');
+			this.connection.removeAllListeners('message');
+			this.connection.removeAllListeners('close');
+			this.connection.removeAllListeners('error');
+		});
 	}
 
-	private _emitDestroyed(): void {
+	private emitDestroyed(): void {
 		// this.emit(ShardEvents.DESTROYED);
 	}
 }

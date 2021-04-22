@@ -1,8 +1,8 @@
-import * as dgateway from 'discord-api-types/gateway/v8';
 import EventEmitter from 'events';
+import { promisify } from 'util';
+import * as dgateway from 'discord-api-types/gateway/v8';
 import { Client } from '../clients';
-import { sleep } from '../utils/sleep';
-import { WebSocketClient, WEBSOCKET_EVENTS } from './WebSocketClient';
+import { WebSocketClient, WebSocketEvents } from './WebSocketClient';
 
 export enum Status {
 	READY,
@@ -16,7 +16,7 @@ export enum Status {
 	RESUMING,
 }
 
-const BeforeReadyWhitelist = [
+const BeforeReadyWhitelist = new Set([
 	dgateway.GatewayDispatchEvents.Ready,
 	dgateway.GatewayDispatchEvents.Resumed,
 	dgateway.GatewayDispatchEvents.GuildCreate,
@@ -24,19 +24,23 @@ const BeforeReadyWhitelist = [
 	dgateway.GatewayDispatchEvents.GuildMembersChunk,
 	dgateway.GatewayDispatchEvents.GuildMemberAdd,
 	dgateway.GatewayDispatchEvents.GuildMemberRemove,
-];
+]);
 
-const WEBSOCKET_CODES = {
+/*const WEBSOCKET_CODES = {
 	1000: 'WS_CLOSE_REQUESTED',
 	4004: 'TOKEN_INVALID',
-} as const;
+} as const;*/
 
-const UNRECOVERABLE_CLOSE_CODES = [4004];
-const UNRESUMABLE_CLOSE_CODES = [1000];
+const UNRECOVERABLE_CLOSE_CODES = new Set([4004]);
+const UNRESUMABLE_CLOSE_CODES = new Set([1000]);
 
 export class WebSocketManager extends EventEmitter {
 	private webSocketClient?: WebSocketClient;
-	private packetQueue: (dgateway.GatewaySendPayload | dgateway.GatewayReceivePayload | dgateway.GatewayDispatchPayload)[] = [];
+	private packetQueue: (
+		| dgateway.GatewaySendPayload
+		| dgateway.GatewayReceivePayload
+		| dgateway.GatewayDispatchPayload
+	)[] = [];
 	private status = Status.IDLE;
 	private destroyed = false;
 	private reconnecting = false;
@@ -46,7 +50,7 @@ export class WebSocketManager extends EventEmitter {
 		super();
 	}
 
-	get ping() {
+	public get ping(): number | undefined {
 		return this.webSocketClient?.ping;
 	}
 
@@ -65,7 +69,7 @@ export class WebSocketManager extends EventEmitter {
 		this.webSocketClient = new WebSocketClient(this);
 
 		if (!this.webSocketClient.eventsAttached) {
-			this.webSocketClient.on(WEBSOCKET_EVENTS.READY, (unavailableGuilds) => {
+			this.webSocketClient.on(WebSocketEvents.READY, () => {
 				// this.client.emit(Events.SHARD_READY, this.webSocketClient.id, unavailableGuilds);
 
 				this.reconnecting = false;
@@ -73,34 +77,32 @@ export class WebSocketManager extends EventEmitter {
 				this.triggerClientReady();
 			});
 
-			this.webSocketClient.on(WEBSOCKET_EVENTS.CLOSE, (event) => {
-				if (event.code === 1000 ? this.destroyed : UNRECOVERABLE_CLOSE_CODES.includes(event.code)) {
+			this.webSocketClient.on(WebSocketEvents.CLOSE, (event) => {
+				if (event.code === 1000 ? this.destroyed : UNRECOVERABLE_CLOSE_CODES.has(event.code)) {
 					// this.client.emit(Events.SHARD_DISCONNECT, event, this.webSocketClient.id);
 
 					return;
 				}
 
-				if (UNRESUMABLE_CLOSE_CODES.includes(event.code)) {
+				if (UNRESUMABLE_CLOSE_CODES.has(event.code) && this.webSocketClient) {
 					// These event codes cannot be resumed
-					if (this.webSocketClient) {
-						this.webSocketClient.sessionID = undefined;
-					}
+					this.webSocketClient.sessionId = undefined;
 				}
 
 				// this.client.emit(Events.SHARD_RECONNECTING, this.webSocketClient.id);
 
-				if (!this.webSocketClient?.sessionID) {
+				if (!this.webSocketClient?.sessionId) {
 					this.webSocketClient?.destroy({ reset: true, emit: false });
 				}
 
 				this.reconnect();
 			});
 
-			this.webSocketClient.on(WEBSOCKET_EVENTS.INVALID_SESSION, () => {
-				//this.client.emit(Events.SHARD_RECONNECTING, this.webSocketClient.id);
-			});
+			/*this.webSocketClient.on(WebSocketEvents.INVALID_SESSION, () => {
+				this.client.emit(Events.SHARD_RECONNECTING, this.webSocketClient.id);
+			});*/
 
-			this.webSocketClient.on(WEBSOCKET_EVENTS.DESTROYED, () => {
+			this.webSocketClient.on(WebSocketEvents.DESTROYED, () => {
 				//this.client.emit(Events.SHARD_RECONNECTING, this.webSocketClient.id);
 
 				this.reconnect();
@@ -112,12 +114,7 @@ export class WebSocketManager extends EventEmitter {
 		try {
 			await this.webSocketClient.connect();
 		} catch (error) {
-			if (error && error.code && UNRECOVERABLE_CLOSE_CODES.includes(error.code)) {
-				// throw new DJSError(WSCodes[error.code]);
-				// Undefined if session is invalid, error event for regular closes
-			} else {
-				throw error;
-			}
+			console.log(error);
 		}
 	}
 
@@ -132,7 +129,7 @@ export class WebSocketManager extends EventEmitter {
 			await this.createClient();
 		} catch (error) {
 			if (error.httpStatus !== 401) {
-				await sleep(5000);
+				await promisify(this.client.setTimeout)(5000);
 
 				this.reconnecting = false;
 
@@ -146,7 +143,7 @@ export class WebSocketManager extends EventEmitter {
 		}
 	}
 
-	public destroy() {
+	public destroy(): void {
 		if (this.destroyed) {
 			return;
 		}
@@ -159,7 +156,7 @@ export class WebSocketManager extends EventEmitter {
 	public handlePacket(
 		packet?: dgateway.GatewaySendPayload | dgateway.GatewayReceivePayload | dgateway.GatewayDispatchPayload,
 	): boolean {
-		if (this.packetQueue.length) {
+		if (this.packetQueue.length > 0) {
 			const packetFromQueue = this.packetQueue.shift();
 
 			this.client.setImmediate(() => {
@@ -171,12 +168,10 @@ export class WebSocketManager extends EventEmitter {
 			return true;
 		}
 
-		if ('t' in packet && this.status !== Status.READY) {
-			if (!BeforeReadyWhitelist.includes(packet.t)) {
-				this.packetQueue.push(packet);
+		if ('t' in packet && this.status !== Status.READY && !BeforeReadyWhitelist.has(packet.t)) {
+			this.packetQueue.push(packet);
 
-				return false;
-			}
+			return false;
 		}
 
 		// handle the packet here
@@ -189,10 +184,10 @@ export class WebSocketManager extends EventEmitter {
 			return;
 		}
 
-    this.status = Status.READY;
+		this.status = Status.READY;
 
-    // this.client.emit(Events.CLIENT_READY);
+		// this.client.emit(Events.CLIENT_READY);
 
-    this.handlePacket();
-  }
+		this.handlePacket();
+	}
 }

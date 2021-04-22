@@ -46,19 +46,6 @@ export interface BaseClientOptions {
 		 */
 		api?: string;
 	};
-
-	ws?: {
-		/**
-		 * WebSocket protocol version
-		 * @default 8
-		 */
-		protocolVersion?: 8 | 13;
-		/**
-		 * Us of zlib compression/decompression
-		 * @default false
-		 */
-		zlib?: boolean;
-	};
 }
 
 const defaultOptions: DeepRequired<BaseClientOptions> = {
@@ -69,10 +56,6 @@ const defaultOptions: DeepRequired<BaseClientOptions> = {
 		timeOffset: 0,
 		http2: false,
 		api: 'https://discord.com/api/v8',
-	},
-	ws: {
-		protocolVersion: 8,
-		zlib: false,
 	},
 };
 
