@@ -1,4 +1,5 @@
 import merge from 'lodash.merge';
+import { WebSocketManager } from '../gateway/WebSocketManager';
 import { DeepRequired } from '../utils/types';
 import { BaseClient, BaseClientOptions } from './BaseClient';
 
@@ -14,18 +15,33 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 		api: 'https://discord.com/api/v8',
 	},
 	ws: {
-		protocolVersion: 13,
+		protocolVersion: 8,
+		zlib: false,
 	},
 };
 
 export class Client extends BaseClient {
 	public readonly options!: DeepRequired<ClientOptions>;
+	public webSocket = new WebSocketManager(this);
 
 	public constructor(options?: ClientOptions) {
 		super('Bot', options ? merge(defaultOptions, options) : defaultOptions);
 	}
 
-	public login(token: string): void {
+	public async login(token: string): Promise<void> {
 		super.token = token;
+
+		try {
+      await this.webSocket.connect();
+    } catch (error) {
+      this.destroy();
+
+      throw error;
+    }
 	}
+
+	public destroy(): void {
+    super.destroy();
+    this.webSocket.destroy();
+  }
 }

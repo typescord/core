@@ -50,9 +50,14 @@ export interface BaseClientOptions {
 	ws?: {
 		/**
 		 * WebSocket protocol version
-		 * @default 13
+		 * @default 8
 		 */
 		protocolVersion?: 8 | 13;
+		/**
+		 * Us of zlib compression/decompression
+		 * @default false
+		 */
+		zlib?: boolean;
 	};
 }
 
@@ -66,7 +71,8 @@ const defaultOptions: DeepRequired<BaseClientOptions> = {
 		api: 'https://discord.com/api/v8',
 	},
 	ws: {
-		protocolVersion: 13,
+		protocolVersion: 8,
+		zlib: false,
 	},
 };
 
@@ -149,7 +155,9 @@ export class BaseClient extends EventEmitter {
 		if (this.destroyed) {
 			return;
 		}
+
 		this.destroyed = true;
+		this.token = undefined;
 
 		this[kIntervals].forEach(this.clearInterval, this);
 		this[kTimeouts].forEach(this.clearTimeout, this);

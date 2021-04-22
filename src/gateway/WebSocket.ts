@@ -3,17 +3,17 @@ import BaseWebSocket from 'ws';
 
 import { encoding } from '.';
 
-export interface GatewayConnectQuery {
-	v: string | number;
+export interface GatewayURLQuery {
+	v: number;
 	encoding?: typeof encoding;
 	compress?: 'zlib-stream';
 }
 
-function craftGatewayAddress(gateway: string, partialQuery: GatewayConnectQuery): string {
+function craftGatewayAddress(gateway: string, partialQuery: Omit<GatewayURLQuery, 'encoding'>): string {
 	const [gatewayAddress, gatewayQuery] = gateway.split('?');
-	const query: GatewayConnectQuery = {
-		encoding,
+	const query: GatewayURLQuery = {
 		...partialQuery,
+		encoding,
 	};
 
 	const queryParams = Object.entries(query);
@@ -31,7 +31,7 @@ function craftGatewayAddress(gateway: string, partialQuery: GatewayConnectQuery)
 }
 
 export class WebSocket extends BaseWebSocket {
-	public constructor(gateway: string, partialQuery: GatewayConnectQuery) {
+	public constructor(gateway: string, partialQuery: Omit<GatewayURLQuery, 'encoding'>) {
 		const gatewayAddress = craftGatewayAddress(gateway, partialQuery);
 
 		super(gatewayAddress);

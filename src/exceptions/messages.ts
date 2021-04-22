@@ -1,5 +1,7 @@
 const $messages = {
 	TOKEN_MISSING: 'The token is missing.',
+	TOKEN_INVALID: 'The token is invalid.',
+	WS_CLOSE_REQUESTED: 'The closure of WebSocket has been requested',
 } as const;
 
 export type MessagesKeys = keyof typeof $messages;
