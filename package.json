@@ -59,8 +59,7 @@
 		"prettier": "^2.2.1",
 		"rimraf": "^3.0.2",
 		"ts-jest": "^26.5.5",
-		"typescript": "^4.2.4",
-		"zlib-sync": "^0.1.7"
+		"typescript": "^4.2.4"
 	},
 	"files": [
 		"build"
@@ -79,8 +78,7 @@
 		"node": "15.14.0"
 	},
 	"peerDependencies": {
-		"@typescord/erlpack": "*",
-		"zlib-sync": "*"
+		"@typescord/erlpack": "*"
 	},
 	"peerDependenciesMeta": {
 		"@typescord/erlpack": {

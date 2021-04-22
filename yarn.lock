@@ -1017,14 +1017,10 @@ __metadata:
     ts-jest: ^26.5.5
     typescript: ^4.2.4
     ws: ^7.4.5
-    zlib-sync: ^0.1.7
   peerDependencies:
     "@typescord/erlpack": "*"
-    zlib-sync: "*"
   peerDependenciesMeta:
     "@typescord/erlpack":
-      optional: true
-    zlib-sync:
       optional: true
   languageName: unknown
   linkType: soft
@@ -5914,15 +5910,6 @@ fsevents@^2.1.2:
   languageName: node
   linkType: hard
 
-"nan@npm:^2.14.0":
-  version: 2.14.2
-  resolution: "nan@npm:2.14.2"
-  dependencies:
-    node-gyp: latest
-  checksum: 36349b2e5df4182aa0d0cc43fcd6cc782ca560a83c2764743d80c14ba5028d0c54041a2f464b8d4cb18a884e04415034a0a764c745e1d5502ea34a5cb6470a39
-  languageName: node
-  linkType: hard
-
 "nanomatch@npm:^1.2.9":
   version: 1.2.13
   resolution: "nanomatch@npm:1.2.13"
@@ -8823,15 +8810,5 @@ typescript@^4.2.4:
     y18n: ^4.0.0
     yargs-parser: ^18.1.2
   checksum: dbf687d6b938f01bbf11e158dde6df906282b70cd9295af0217ee8cefbd83ad09d49fa9458d0d5325b0e66f03df954a38986db96f91e5b46ccdbbaf9a0157b23
-  languageName: node
-  linkType: hard
-
-"zlib-sync@npm:^0.1.7":
-  version: 0.1.7
-  resolution: "zlib-sync@npm:0.1.7"
-  dependencies:
-    nan: ^2.14.0
-    node-gyp: latest
-  checksum: 9d1b37a451cd95dc315a6fc2a46a45ab275a2db88716803c65852b7baaf724be1024884a4a3cb09b9e8e46a43e12c10a9cdc35673bc4b5984f568b0001be56e1
   languageName: node
   linkType: hard
