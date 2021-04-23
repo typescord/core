@@ -1,7 +1,7 @@
 import { HTTPError, RequestError, Response } from 'got';
 import { Request } from './Request';
 import { Queue } from './Queue';
-import { RestManager } from './RestManager';
+import { HttpManager } from './HttpManager';
 
 const RETRIES_STATUS_CODE = new Set([408, 500, 502, 503, 504, 521, 522, 524]);
 const RETRIES_ERROR_CODE = new Set([
@@ -31,7 +31,7 @@ export class RequestHandler {
 	private remaining = Infinity;
 	private reset = -1;
 
-	public constructor(private readonly manager: RestManager) {}
+	public constructor(private readonly manager: HttpManager) {}
 
 	public get localLimited(): boolean {
 		return this.remaining <= 0 && Date.now() < this.reset;

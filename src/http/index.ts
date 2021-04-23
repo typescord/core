@@ -1,5 +1,5 @@
 export * from './RequestHandler';
-export * from './RestManager';
+export * from './HttpManager';
 export * from './Queue';
 export * from './Request';
 export * from './routeBuilder';

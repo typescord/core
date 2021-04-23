@@ -3,7 +3,7 @@ import { BaseClient } from '../clients/BaseClient';
 import { Exception } from '../exceptions';
 import { Request, RequestHandler, RequestOptions, Methods, routeBuilder } from '.';
 
-export class RestManager {
+export class HttpManager {
 	private readonly handlers = new Collection<string, RequestHandler>();
 	public delay?: Promise<void>;
 	public reset = -1;

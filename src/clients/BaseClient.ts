@@ -3,7 +3,7 @@
 import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
 import { DeepRequired } from '../utils/types';
-import { RestManager, Routes } from '../http';
+import { HttpManager, Routes } from '../http';
 
 export type TokenType = 'Bot' | 'Bearer';
 
@@ -65,14 +65,14 @@ export class BaseClient extends EventEmitter {
 	private readonly [kIntervals] = new Set<NodeJS.Timeout>();
 
 	public readonly options: DeepRequired<BaseClientOptions>;
-	public readonly rest: RestManager;
+	public readonly rest: HttpManager;
 	public destroyed = false;
 	public token?: string;
 
 	protected constructor(public readonly tokenType: TokenType, options?: BaseClientOptions) {
 		super();
 		this.options = options ? merge(defaultOptions, options) : defaultOptions;
-		this.rest = new RestManager(this);
+		this.rest = new HttpManager(this);
 	}
 
 	public get api(): Routes {

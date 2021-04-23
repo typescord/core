@@ -3,7 +3,7 @@ import { Agent as Http2Agent } from 'http2-wrapper';
 import got, { Headers, HTTPError, OptionsOfBufferResponseBody, Response } from 'got';
 import { FormData } from '@typescord/form-data';
 import { USER_AGENT } from '../constants';
-import { RestManager, Methods } from '.';
+import type { HttpManager, Methods } from '.';
 
 const dot = got.extend({
 	agent: {
@@ -36,7 +36,7 @@ export class Request {
 	public retries = 0;
 
 	public constructor(
-		public readonly manager: RestManager,
+		public readonly manager: HttpManager,
 		public readonly method: Methods,
 		public readonly url: string,
 		public readonly options: RequestOptions,

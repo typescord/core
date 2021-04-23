@@ -1,35 +1,33 @@
-import { BaseRequestOptions, RestManager, Routes } from '.';
+import { Snowflake } from 'discord-api-types';
+import { BaseRequestOptions, HttpManager, Routes } from '.';
 
-export const methods = new Set(['get', 'post', 'delete', 'patch', 'put'] as const);
-export const reflectors = new Set([
+const methods = new Set(['get', 'post', 'delete', 'patch', 'put'] as const);
+const reflectors = new Set([
 	'toString',
 	'valueOf',
 	'inspect',
 	'constructor',
 	Symbol.toPrimitive,
 	Symbol.for('nodejs.util.inspect.custom'),
-] as const);
+]);
 
-type SetType<T extends Set<unknown>> = T extends Set<infer R> ? R : never;
-
-export type Methods = SetType<typeof methods>;
-export type Reflectors = SetType<typeof reflectors>;
+export type Methods = typeof methods extends Set<infer T> ? T : never;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop: Routes = ((() => {}) as unknown) as Routes;
 
-export function routeBuilder(manager: RestManager): Routes {
+export function routeBuilder(manager: HttpManager): Routes {
 	const route: string[] = [];
 
 	const handler: ProxyHandler<Routes> = {
-		get(_target, name: string) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			if (reflectors.has(name as any)) {
+		// real name's type is string | symbol | Methods, but to avoid
+		// useless typings and castings, it's typed as string | Methods.
+		get(_target, name: string | Methods) {
+			if (reflectors.has(name)) {
 				return () => route.join('/');
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			if (methods.has(name as any)) {
+			if (methods.has(name as Methods)) {
 				let finalRoute = '';
 				for (let index = 0; index < route.length; index++) {
 					// Reactions routes and sub-routes all share the same bucket
@@ -55,7 +53,7 @@ export function routeBuilder(manager: RestManager): Routes {
 			route.push(name);
 			return new Proxy(noop, handler);
 		},
-		apply(_target, _thisArg, [path]: [string | number]) {
+		apply(_target, _thisArg, [path]: [Snowflake | string | number]) {
 			route.push(path.toString());
 			return new Proxy(noop, handler);
 		},
