@@ -1,12 +1,29 @@
 import { EventEmitter } from 'events';
 import { constants, createInflate, Inflate } from 'zlib';
-import { platform } from 'os';
-import ws, { ErrorEvent } from 'ws';
-import * as dgateway from 'discord-api-types/gateway/v8';
+import { encode } from 'querystring';
+import { Readable } from 'stream';
+import WebSocket, { ErrorEvent } from 'ws';
+import {
+	GatewayDispatchEvents,
+	GatewayOPCodes,
+	GatewayReceivePayload,
+	Snowflake,
+	GatewaySendPayload,
+} from 'discord-api-types';
 import { Client } from '../clients/Client';
-import { GatewayURLQuery, WebSocket } from './WebSocket';
+import { once, rejectOnce } from '../utils/events';
 import { Status, WebSocketManager } from './WebSocketManager';
-import { pack, unpack } from '.';
+
+const ZLIB_SUFFIX = Buffer.from([0x00, 0x00, 0xff, 0xff]);
+
+let erlpack: typeof import('@typescord/erlpack') | undefined;
+try {
+	// eslint-disable-next-line unicorn/prefer-module
+	erlpack = require('@typescord/erlpack');
+	// eslint-disable-next-line no-empty
+} catch {}
+
+const encoding = erlpack ? 'etf' : 'json';
 
 export const enum WebSocketEvents {
 	CLOSE = 'close',
@@ -16,126 +33,134 @@ export const enum WebSocketEvents {
 	RESUMED = 'resumed',
 }
 
-const ZLIB_SUFFIX = Buffer.from([0x00, 0x00, 0xff, 0xff]);
+type GatewayURLQuery = {
+	v: number;
+	encoding?: typeof encoding;
+	compress?: 'zlib-stream';
+};
+
+const pack = erlpack ? erlpack.pack : JSON.stringify;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const unpack: (data: Buffer) => any = erlpack ? erlpack.unpack : (data: Buffer) => JSON.parse(data.toString('utf8'));
 
 interface RateLimit {
-	queue: any[];
-	total: number;
+	queue: GatewaySendPayload[];
+	limit: number;
 	remaining: number;
 	time: number;
 	timer?: NodeJS.Timeout;
 }
 
 export class WebSocketClient extends EventEmitter {
-	public client: Client;
-	public status = Status.IDLE;
-	public eventsAttached = false;
-	public ping = -1;
-	private lastPingTimestamp = -1;
 	private connection?: WebSocket;
-	private results: Buffer[] = [];
 	private chunks: Buffer[] = [];
 	private inflator?: Inflate;
-	private sequence = -1;
-	public sessionId?: string;
-	private expectedGuilds?: Set<string>;
-	private connectedAt?: number;
+	private expectedGuilds?: Set<Snowflake>;
+	private readonly rateLimit: RateLimit;
+
 	private lastHeartbeatAcked = true;
-	private closeSequence = 0;
-	private readyTimeout?: NodeJS.Timeout;
-	private ratelimit: RateLimit = {
-		queue: [],
-		total: 120,
-		remaining: 120,
-		time: 60e3,
-	};
-	private helloTimeout?: NodeJS.Timeout;
 	private heartbeatInterval?: NodeJS.Timeout;
+	private helloTimeout?: NodeJS.Timeout;
+	private readyTimeout?: NodeJS.Timeout;
+	private lastPingTimestamp = -1;
+	private sequence = -1;
+	private closeSequence = 0;
+
+	public readonly client: Client;
+	public ping = -1;
+	public status = Status.IDLE;
+	public eventsAttached = false;
+	public sessionId?: string;
+	public connectedAt?: number;
 
 	public constructor(public readonly manager: WebSocketManager) {
 		super();
-
 		this.client = manager.client;
+		this.rateLimit = {
+			queue: [],
+			...this.client.options.ws.rateLimits,
+			remaining: this.client.options.ws.rateLimits.limit,
+		};
 	}
 
 	public async connect(): Promise<void> {
-		if (this.connection?.readyState === ws.OPEN && this.status === Status.READY) {
-			return;
+		if (this.connection?.readyState === WebSocket.OPEN) {
+			return this.status === Status.READY ? undefined : this.identify();
 		}
 
-		return new Promise((resolve, reject) => {
-			this.once(WebSocketEvents.READY, () => resolve());
-			this.once(WebSocketEvents.RESUMED, () => resolve());
-			this.once(WebSocketEvents.CLOSE, (event: ws.CloseEvent) => reject(event));
-			this.once(WebSocketEvents.INVALID_SESSION, () => reject());
-			this.once(WebSocketEvents.DESTROYED, () => reject());
+		if (this.connection) {
+			this.destroy();
+		}
 
-			if (this.connection?.readyState === ws.OPEN) {
-				this.identify();
+		const gatewayOptions: GatewayURLQuery = {
+			v: this.client.options.ws.version,
+			encoding,
+		};
 
-				return;
-			}
+		if (this.client.options.ws.zlib) {
+			this.inflator = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 65535 });
+			gatewayOptions.compress = 'zlib-stream';
+		}
 
-			if (this.connection) {
-				this.destroy();
-			}
+		this.status = this.status === Status.DISCONNECTED ? Status.RECONNECTING : Status.CONNECTING;
 
-			const gatewayConnectQuery: GatewayURLQuery = { v: this.client.options.ws.version };
+		this.connection = new WebSocket(`${this.manager.gateway}?${encode(gatewayOptions)}`);
+		this.connection.on('open', this.onOpen.bind(this));
+		this.connection.on('message', this.onMessage.bind(this));
+		this.connection.on('error', this.onError.bind(this));
+		this.connection.on('close', this.onClose.bind(this));
 
-			if (this.client.options.ws.zlib) {
-				this.inflator = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 65535 }).on(
-					'data',
-					this.results.push,
-				);
-
-				gatewayConnectQuery.compress = 'zlib-stream';
-			}
-
-			this.status = this.status === Status.DISCONNECTED ? Status.RECONNECTING : Status.CONNECTING;
-
-			this.connection = new WebSocket(this.manager.gateway, gatewayConnectQuery);
-			this.connection.addEventListener('open', this.onOpen.bind(this));
-			this.connection.addEventListener('message', this.onMessage.bind(this));
-			this.connection.addEventListener('error', this.onError.bind(this));
-			this.connection.addEventListener('close', this.onClose.bind(this));
-		});
+		// @ts-expect-error waiting node 15 types
+		const ac = new AbortController();
+		return Promise.race<void>([
+			once(this, WebSocketEvents.READY, ac.signal),
+			once(this, WebSocketEvents.RESUMED, ac.signal),
+			rejectOnce(this, WebSocketEvents.CLOSE, ac.signal),
+			rejectOnce(this, WebSocketEvents.INVALID_SESSION, ac.signal),
+			rejectOnce(this, WebSocketEvents.DESTROYED, ac.signal),
+		]).finally(ac.abort);
 	}
 
 	private onOpen(): void {
+		this.connectedAt = Date.now();
 		this.status = Status.NEARLY;
 	}
 
-	private async onMessage({ data }: { data: string | Buffer }) {
-		let packet = Buffer.from(data);
+	private async onMessage(data: string | Buffer): Promise<GatewayReceivePayload | undefined> {
+		if (typeof data === 'string') {
+			return JSON.parse(data);
+		}
 
 		if (this.client.options.ws.zlib) {
-			this.chunks.push(packet);
-
-			if (!packet.slice(-4).equals(ZLIB_SUFFIX)) {
+			this.chunks.push(data);
+			if (!data.slice(-4).equals(ZLIB_SUFFIX)) {
 				return;
 			}
 
-			this.inflator?.write(Buffer.concat(this.chunks));
+			data = await new Promise<Buffer>((resolve, reject) => {
+				const chunks: Buffer[] = [];
+				Readable.from(Buffer.concat(this.chunks))
+					.pipe(this.inflator!)
+					.on('data', chunks.push)
+					.on('end', () => resolve(Buffer.concat(chunks)))
+					.on('error', reject);
+			});
 
-			packet = await new Promise((resolve) => this.inflator?.flush(() => resolve(Buffer.concat(this.results))));
-
-			this.results = [];
 			this.chunks = [];
 		}
 
 		try {
-			this.onPacket(unpack(packet));
-			// eslint-disable-next-line no-empty
-		} catch {}
+			this.onPacket(unpack(data));
+		} catch {
+			// TODO: handle errors
+		}
 	}
 
 	private onError(event: ErrorEvent) {
 		const error = event.error ? event.error : event;
-
 		if (!error) {
 			return;
 		}
-
 		// this.client.emit(Events.SHARD_ERROR, error, this.id);
 	}
 
@@ -143,51 +168,41 @@ export class WebSocketClient extends EventEmitter {
 		if (this.sequence !== -1) {
 			this.closeSequence = this.sequence;
 		}
-
 		this.sequence = -1;
 
-		this.setHeartbeatTimer(-1);
-		this.setHelloTimeout(-1);
+		this.setHeartbeatTimer();
+		this.setHelloTimeout();
 
 		if (this.connection) {
 			this.cleanupConnection();
 		}
 
 		this.status = Status.DISCONNECTED;
-
 		// this.emit(ShardEvents.CLOSE, event);
 	}
 
-	private onPacket(
-		packet?: dgateway.GatewaySendPayload | dgateway.GatewayReceivePayload | dgateway.GatewayDispatchPayload,
-	): void {
+	private onPacket(packet?: GatewayReceivePayload): void {
 		if (!packet) {
 			return;
 		}
 
 		if ('t' in packet) {
-			switch (packet.t) {
-				case dgateway.GatewayDispatchEvents.Ready:
-					// this.emit(ShardEvents.RESUMED);
+			if (packet.t === GatewayDispatchEvents.Ready) {
+				// this.emit(ShardEvents.RESUMED);
 
-					this.sessionId = packet.d.session_id;
-					this.expectedGuilds = new Set(packet.d.guilds.map((guild) => guild.id));
-					this.status = Status.WAITING_FOR_GUILDS;
-					this.lastHeartbeatAcked = true;
+				this.sessionId = packet.d.session_id;
+				this.expectedGuilds = new Set(packet.d.guilds.map((guild) => guild.id));
+				this.status = Status.WAITING_FOR_GUILDS;
+				this.lastHeartbeatAcked = true;
 
-					this.sendHeartbeat();
+				this.sendHeartbeat();
+			} else if (packet.t === GatewayDispatchEvents.Resumed) {
+				// this.emit(ShardEvents.RESUMED);
 
-					break;
-				case dgateway.GatewayDispatchEvents.Resumed: {
-					// this.emit(ShardEvents.RESUMED);
+				this.status = Status.READY;
+				this.lastHeartbeatAcked = true;
 
-					this.status = Status.READY;
-					this.lastHeartbeatAcked = true;
-
-					this.sendHeartbeat();
-
-					break;
-				}
+				this.sendHeartbeat();
 			}
 		}
 
@@ -196,45 +211,40 @@ export class WebSocketClient extends EventEmitter {
 		}
 
 		switch (packet.op) {
-			case dgateway.GatewayOPCodes.Hello:
+			case GatewayOPCodes.Hello:
 				this.setHelloTimeout(-1);
 				this.setHeartbeatTimer(packet.d.heartbeat_interval);
 				this.identify();
-
 				break;
-			case dgateway.GatewayOPCodes.Reconnect:
+
+			case GatewayOPCodes.Reconnect:
 				this.destroy({ closeCode: 4000 });
-
 				break;
-			case dgateway.GatewayOPCodes.InvalidSession:
+
+			case GatewayOPCodes.InvalidSession:
 				if (packet.d) {
 					this.identifyResume();
-
 					return;
 				}
 
 				this.sequence = -1;
 				this.sessionId = undefined;
 				this.status = Status.RECONNECTING;
-
 				// this.emit(ShardEvents.INVALID_SESSION);
 				break;
-			case dgateway.GatewayOPCodes.HeartbeatAck:
+
+			case GatewayOPCodes.HeartbeatAck:
 				this.ackHeartbeat();
-
 				break;
-			case dgateway.GatewayOPCodes.Heartbeat:
+
+			case GatewayOPCodes.Heartbeat:
 				this.sendHeartbeat();
-
 				break;
+
 			default:
 				this.manager.handlePacket(packet);
 
-				if (
-					this.status === Status.WAITING_FOR_GUILDS &&
-					't' in packet &&
-					packet.t === dgateway.GatewayDispatchEvents.GuildCreate
-				) {
+				if (this.status === Status.WAITING_FOR_GUILDS && packet.t === GatewayDispatchEvents.GuildCreate) {
 					this.expectedGuilds?.delete(packet.d.id);
 					this.checkReady();
 				}
@@ -250,7 +260,6 @@ export class WebSocketClient extends EventEmitter {
 
 		if (!this.expectedGuilds?.size) {
 			this.status = Status.READY;
-
 			// this.emit(ShardEvents.ALL_READY);
 
 			return;
@@ -259,19 +268,16 @@ export class WebSocketClient extends EventEmitter {
 		this.readyTimeout = this.client.setTimeout(() => {
 			this.readyTimeout = undefined;
 			this.status = Status.READY;
-
 			// this.emit(ShardEvents.ALL_READY, this.expectedGuilds);
 		}, 15000);
 	}
 
-	private setHelloTimeout(time: number) {
-		if (time === -1) {
+	private setHelloTimeout(time?: number) {
+		if (!time) {
 			if (this.helloTimeout) {
 				this.client.clearTimeout(this.helloTimeout);
-
 				this.helloTimeout = undefined;
 			}
-
 			return;
 		}
 
@@ -280,14 +286,12 @@ export class WebSocketClient extends EventEmitter {
 		}, 20000);
 	}
 
-	private setHeartbeatTimer(time: number) {
-		if (time === -1) {
+	private setHeartbeatTimer(time?: number) {
+		if (!time) {
 			if (this.heartbeatInterval) {
 				this.client.clearInterval(this.heartbeatInterval);
-
 				this.heartbeatInterval = undefined;
 			}
-
 			return;
 		}
 
@@ -308,7 +312,7 @@ export class WebSocketClient extends EventEmitter {
 		this.lastHeartbeatAcked = false;
 		this.lastPingTimestamp = Date.now();
 
-		this.send({ op: dgateway.GatewayOPCodes.Heartbeat, d: this.sequence }, true);
+		this.send({ op: GatewayOPCodes.Heartbeat, d: this.sequence });
 	}
 
 	private ackHeartbeat(): void {
@@ -327,94 +331,79 @@ export class WebSocketClient extends EventEmitter {
 
 		this.status = Status.IDENTIFYING;
 
-		this.send(
-			{
-				op: dgateway.GatewayOPCodes.Identify,
-				d: {
-					properties: {
-						$os: platform(),
-						$browser: 'typescord',
-						$device: 'typescord',
-					},
-					compress: this.client.options.ws.zlib,
-					token: this.client.token,
-					intent: 513, // temporary
+		this.send({
+			op: GatewayOPCodes.Identify,
+			d: {
+				properties: {
+					$os: process.platform,
+					$browser: 'typescord',
+					$device: 'typescord',
 				},
+				compress: this.client.options.ws.zlib,
+				large_threshold: this.client.options.ws.largeThreshold,
+				token: this.client.token,
+				intents: 513, // temporary
 			},
-			true,
-		);
+		});
 	}
 
 	private identifyResume(): void {
 		if (!this.sessionId) {
 			this.identifyNew();
-
 			return;
 		}
 
 		this.status = Status.RESUMING;
 
-		this.send(
-			{
-				op: dgateway.GatewayOPCodes.Resume,
-				d: {
-					token: this.client.token,
-					session_id: this.sessionId,
-					seq: this.closeSequence,
-				},
+		this.send({
+			op: GatewayOPCodes.Resume,
+			d: {
+				token: this.client.token!,
+				session_id: this.sessionId,
+				seq: this.closeSequence,
 			},
-			true,
-		);
+		});
 	}
 
-	public send(data: any, important = false): void {
+	public send(data: GatewaySendPayload, important = true): void {
 		if (important) {
-			this.ratelimit.queue.push(data);
+			this.rateLimit.queue.push(data);
 		} else {
-			this.ratelimit.queue.unshift(data);
+			this.rateLimit.queue.unshift(data);
 		}
 
 		this.processQueue();
 	}
 
-	private $send(data: any) {
-		if (!this.connection || this.connection.readyState !== WebSocket.OPEN) {
-			this.destroy({ closeCode: 4000 });
-
-			return;
-		}
-
-		this.connection.send(pack(data), (error) => {
-			if (error) {
-				// this.client.emit(Events.SHARD_ERROR, err, this.id);
-				console.log(error);
-			}
-		});
-	}
-
 	private processQueue(): void {
-		if (this.ratelimit.remaining === 0 || this.ratelimit.queue.length === 0) {
+		if (this.rateLimit.remaining === 0 || this.rateLimit.queue.length === 0) {
 			return;
 		}
 
-		if (this.ratelimit.remaining === this.ratelimit.total) {
-			this.ratelimit.timer = this.client.setTimeout(() => {
-				this.ratelimit.remaining = this.ratelimit.total;
-
+		if (this.rateLimit.remaining === this.rateLimit.limit) {
+			this.rateLimit.timer = this.client.setTimeout(() => {
+				this.rateLimit.remaining = this.rateLimit.limit;
 				this.processQueue();
-			}, this.ratelimit.time);
+			}, this.rateLimit.time);
 		}
 
-		while (this.ratelimit.remaining > 0) {
-			const item = this.ratelimit.queue.shift();
-
+		while (this.rateLimit.remaining > 0) {
+			const item = this.rateLimit.queue.shift();
 			if (!item) {
 				return;
 			}
 
-			this.$send(item);
+			if (!this.connection || this.connection.readyState !== WebSocket.OPEN) {
+				this.destroy({ closeCode: 4000 });
+				return;
+			}
 
-			this.ratelimit.remaining--;
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			this.connection.send(pack(item), (_error) => {
+				// TODO: handle error
+			});
+
+			this.rateLimit.remaining--;
 		}
 	}
 
@@ -453,27 +442,24 @@ export class WebSocketClient extends EventEmitter {
 			this.sessionId = undefined;
 		}
 
-		this.ratelimit.remaining = this.ratelimit.total;
-		this.ratelimit.queue.length = 0;
+		this.rateLimit.remaining = this.rateLimit.limit;
+		this.rateLimit.queue = [];
 
-		if (this.ratelimit.timer) {
-			this.client.clearTimeout(this.ratelimit.timer);
+		if (this.rateLimit.timer) {
+			this.client.clearTimeout(this.rateLimit.timer);
 
-			this.ratelimit.timer = undefined;
+			this.rateLimit.timer = undefined;
 		}
 	}
 
 	private cleanupConnection(): void {
-		this.connection?.addEventListener('open', () => {
-			if (!this.connection) {
-				return;
-			}
-
-			this.connection.removeAllListeners('open');
-			this.connection.removeAllListeners('message');
-			this.connection.removeAllListeners('close');
-			this.connection.removeAllListeners('error');
-		});
+		if (!this.connection) {
+			return;
+		}
+		this.connection.removeAllListeners('open');
+		this.connection.removeAllListeners('message');
+		this.connection.removeAllListeners('close');
+		this.connection.removeAllListeners('error');
 	}
 
 	private emitDestroyed(): void {
