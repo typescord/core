@@ -3,25 +3,48 @@ import { WebSocketManager } from '../gateway/WebSocketManager';
 import { DeepRequired } from '../utils/types';
 import { BaseClient, BaseClientOptions } from './BaseClient';
 
-type ClientOptions = BaseClientOptions & {
+interface ClientOptions extends BaseClientOptions {
 	ws?: {
 		/**
-		 * URL of Discord's WebSocket gateway
+		 * URL of Discord's WebSocket gateway.
 		 * @default 'wss://gateway.discord.gg/'
 		 */
 		gateway?: string;
 		/**
-		 * Discord's gateway version
+		 * Discord's gateway version.
 		 * @default 8
 		 */
 		version?: 7 | 8;
 		/**
-		 * Use of zlib compression/decompression
+		 * Use of zlib compression/decompression.
 		 * @default false
 		 */
 		zlib?: boolean;
+		/**
+		 * Value between 50 and 250, total number of members where the gateway
+		 * will stop sending offline members in the guild member list.
+		 * @default 50
+		 */
+		largeThreshold?: number;
+		/**
+		 * Rate limits values. We recommend We recommend that you do not change
+		 * these settings as you risk getting a rate limit if you do not respect
+		 * these limits: https://discord.com/developers/docs/topics/gateway#rate-limiting.
+		 */
+		rateLimits?: {
+			/**
+			 * Max commands that can be made in `time`.
+			 * @default 120
+			 */
+			limit?: number;
+			/**
+			 * Time in milliseconds
+			 * @default 6_000
+			 */
+			time?: number;
+		};
 	};
-}; // temporary
+} // temporary
 
 const defaultOptions: DeepRequired<ClientOptions> = {
 	http: {
@@ -36,6 +59,11 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 		gateway: 'wss://gateway.discord.gg/', // temporary
 		version: 7,
 		zlib: false,
+		largeThreshold: 50,
+		rateLimits: {
+			limit: 120,
+			time: 6_000,
+		},
 	},
 };
 
