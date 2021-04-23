@@ -991,7 +991,7 @@ __metadata:
     "@types/lodash.merge": ^4.6.6
     "@types/node": ^14.14.41
     "@types/ws": ^7.4.1
-    "@typescord/erlpack": ^0.6.0
+    "@typescord/erlpack": ^0.7.0
     "@typescord/eslint-config": ^0.2.1
     "@typescord/form-data": ^3.0.3
     "@typescord/mrm-preset": ^2.1.2
@@ -1005,8 +1005,8 @@ __metadata:
     eslint-plugin-import: ^2.22.1
     eslint-plugin-prettier: ^3.4.0
     eslint-plugin-simple-import-sort: ^7.0.0
-    eslint-plugin-sonarjs: ^0.6.0
-    eslint-plugin-unicorn: ^30.0.0
+    eslint-plugin-sonarjs: ^0.7.0
+    eslint-plugin-unicorn: ^31.0.0
     got: ^11.8.2
     http2-wrapper: ^2.0.3
     jest: ^26.6.3
@@ -1018,21 +1018,21 @@ __metadata:
     typescript: ^4.2.4
     ws: ^7.4.5
   peerDependencies:
-    "@typescord/erlpack": "*"
+    "@typescord/erlpack": ^0.6.0
   peerDependenciesMeta:
     "@typescord/erlpack":
       optional: true
   languageName: unknown
   linkType: soft
 
-"@typescord/erlpack@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "@typescord/erlpack@npm:0.6.0"
+"@typescord/erlpack@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "@typescord/erlpack@npm:0.7.0"
   dependencies:
     "@mapbox/node-pre-gyp": ^1.0.1
     node-addon-api: ^3.1.0
     node-gyp: ^7.1.2
-  checksum: dcfec9b792bb2ecdee0b6da5c5c2db5583631065070113ebc7ecc6f03c4c48149aa1178778cc4e841eefa318c6405e14a0a1d217dcc6d384299157e373107802
+  checksum: be6cb4f83afe86d3125d9392c419272a563cc3cac06e082a7b143fe773fc2d734419535339a19842f3705719973a66ae07d4db5c92d51df1dfc1e7c7e7308a38
   languageName: node
   linkType: hard
 
@@ -1788,6 +1788,13 @@ __metadata:
   version: 1.1.1
   resolution: "buffer-from@npm:1.1.1"
   checksum: 540ceb79c4f5bfcadaabbc18324fa84c50dc52905084be7c03596a339cf5a88513bee6831ce9b36ddd046fab09257a7c80686e129d0559a0cfd141da196ad956
+  languageName: node
+  linkType: hard
+
+"builtin-modules@npm:^3.0.0":
+  version: 3.2.0
+  resolution: "builtin-modules@npm:3.2.0"
+  checksum: f0e7240f70ae472a0a0167bf76d2e828c73028fe60be8cd229939c38a27527ea68c92f700553dac1316fa124af3037bc7a765ca0e029a03d2e9201dfb372ea24
   languageName: node
   linkType: hard
 
@@ -2926,18 +2933,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-sonarjs@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "eslint-plugin-sonarjs@npm:0.6.0"
+"eslint-plugin-sonarjs@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "eslint-plugin-sonarjs@npm:0.7.0"
   peerDependencies:
     eslint: ^5.0.0 || ^6.0.0 || ^7.0.0
-  checksum: cbc964d66328aadf352bfd75eed163e6729f891d6c7d16d971161f4e90e03541f66338ea801f7c1bbb20f11b58ddf2aac7ab877a97b02102f1511f50a5a13e38
+  checksum: 32ebd356cff0912c19f359545aade803f0dfa3e93d605b3c1265a3aa3adb2f743eb194f2b696cf7c0d8db3d1c3a524538c5633da703d23d1a6208450e2cf336c
   languageName: node
   linkType: hard
 
-"eslint-plugin-unicorn@npm:^30.0.0":
-  version: 30.0.0
-  resolution: "eslint-plugin-unicorn@npm:30.0.0"
+"eslint-plugin-unicorn@npm:^31.0.0":
+  version: 31.0.0
+  resolution: "eslint-plugin-unicorn@npm:31.0.0"
   dependencies:
     ci-info: ^3.1.1
     clean-regexp: ^1.0.0
@@ -2945,6 +2952,7 @@ __metadata:
     eslint-utils: ^2.1.0
     eslint-visitor-keys: ^2.0.0
     import-modules: ^2.1.0
+    is-builtin-module: ^3.1.0
     lodash: ^4.17.21
     pluralize: ^8.0.0
     read-pkg-up: ^7.0.1
@@ -2954,7 +2962,7 @@ __metadata:
     semver: ^7.3.5
   peerDependencies:
     eslint: ">=7.23.0"
-  checksum: 1e6aece1c5c7d372b910948a1758489f05a47fad9fe787fa8150d69800c02c9463e74bfa810ff0b4c8643b404485e9c32195dc55e3b9d7742c841f29c1974cfa
+  checksum: ff2b2cbf2e5b621be0487f2e4c9f8f2ac3a0b12ac8979aa4d0e536d68928d1616d320be31a4a4b139b91f62f980bfbf2204fd1e3b9c84dc7c74c270efc77645d
   languageName: node
   linkType: hard
 
@@ -4191,6 +4199,15 @@ fsevents@^2.1.2:
   version: 1.1.6
   resolution: "is-buffer@npm:1.1.6"
   checksum: 336ec78f00e88efe6ff6f1aa08d06aadb942a6cd320e5f538ac00648378fb964743b3737c88ce7ce8741c067e4a3b78f596b83ee1a3c72dc2885ea0b03dc84f2
+  languageName: node
+  linkType: hard
+
+"is-builtin-module@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "is-builtin-module@npm:3.1.0"
+  dependencies:
+    builtin-modules: ^3.0.0
+  checksum: 47e63f00aaa979aa3102ea3874cbf0575bf93362b5d37e7ed2524658c4184c2fcd760e040d5341e7fab2e9ff53ef0f3775dacfddf237a8b62b472aa278a8d409
   languageName: node
   linkType: hard
 
