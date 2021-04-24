@@ -1,7 +1,10 @@
 import EventEmitter from 'events';
 import { promisify } from 'util';
 import { GatewayReceivePayload, GatewayDispatchEvents } from 'discord-api-types/gateway/v8';
+import { Snowflake } from 'discord-api-types';
+import { CloseEvent } from 'ws';
 import { Client } from '../clients';
+import { Events } from '../utils/events';
 import { WebSocketClient, WebSocketEvents } from './WebSocketClient';
 
 export const enum Status {
@@ -65,16 +68,17 @@ export class WebSocketManager extends EventEmitter {
 		this.webSocketClient = new WebSocketClient(this);
 
 		if (!this.webSocketClient.eventsAttached) {
-			this.webSocketClient.on(WebSocketEvents.READY, () => {
-				// this.client.emit(Events.SHARD_READY, this.webSocketClient.id, unavailableGuilds);
+			this.webSocketClient.on(WebSocketEvents.READY, (unavailableGuilds: Set<Snowflake>) => {
+				this.client.emit(Events.WEBSOCKET_READY, unavailableGuilds);
 
 				this.reconnecting = false;
 				this.triggerClientReady();
 			});
 
-			this.webSocketClient.on(WebSocketEvents.CLOSE, (event) => {
+			this.webSocketClient.on(WebSocketEvents.CLOSE, (event: CloseEvent) => {
 				if (event.code === 1000 ? this.destroyed : UNRECOVERABLE_CLOSE_CODES.has(event.code)) {
-					// this.client.emit(Events.SHARD_DISCONNECT, event, this.webSocketClient.id);
+					this.client.emit(Events.WEBSOCKET_DISCONNECTING, event);
+
 					return;
 				}
 
@@ -83,7 +87,7 @@ export class WebSocketManager extends EventEmitter {
 					this.webSocketClient.sessionId = undefined;
 				}
 
-				// this.client.emit(Events.SHARD_RECONNECTING, this.webSocketClient.id);
+				this.client.emit(Events.WEBSOCKET_RECONNECTING);
 
 				if (!this.webSocketClient?.sessionId) {
 					this.webSocketClient?.destroy({ reset: true, emit: false });
@@ -92,12 +96,13 @@ export class WebSocketManager extends EventEmitter {
 				this.reconnect();
 			});
 
-			/*this.webSocketClient.on(WebSocketEvents.INVALID_SESSION, () => {
-				this.client.emit(Events.SHARD_RECONNECTING, this.webSocketClient.id);
-			});*/
+			this.webSocketClient.on(WebSocketEvents.INVALID_SESSION, () => {
+				this.client.emit(Events.WEBSOCKET_RECONNECTING);
+			});
 
 			this.webSocketClient.on(WebSocketEvents.DESTROYED, () => {
-				//this.client.emit(Events.SHARD_RECONNECTING, this.webSocketClient.id);
+				this.client.emit(Events.WEBSOCKET_RECONNECTING);
+
 				this.reconnect();
 			});
 
@@ -169,7 +174,7 @@ export class WebSocketManager extends EventEmitter {
 		}
 
 		this.status = Status.READY;
-		// this.client.emit(Events.CLIENT_READY);
+		this.client.emit(Events.CLIENT_READY);
 
 		this.handlePacket();
 	}
