@@ -4,5 +4,4 @@ export enum Events {
 	WEBSOCKET_ERROR = 'websocketError',
 	WEBSOCKET_READY = 'websocketReady',
 	WEBSOCKET_RECONNECTING = 'websocketReconnecting',
-	WEBSOCKET_RECONNECTINGf = 'websocketReconnecting',
 }
