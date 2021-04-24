@@ -1,17 +1,18 @@
 import { EventEmitter } from 'events';
-import { constants, createInflate, Inflate } from 'zlib';
 import { encode } from 'querystring';
 import { Readable } from 'stream';
+import { constants, createInflate, Inflate } from 'zlib';
 import WebSocket, { CloseEvent, ErrorEvent } from 'ws';
 import {
 	GatewayDispatchEvents,
 	GatewayOPCodes,
 	GatewayReceivePayload,
-	Snowflake,
 	GatewaySendPayload,
+	Snowflake,
 } from 'discord-api-types';
 import { Client } from '../clients/Client';
-import { Events, once, rejectOnce } from '../utils/events';
+import { once, rejectOnce } from '../utils/events';
+import { Events } from './Events';
 import { Status, WebSocketManager } from './WebSocketManager';
 
 const ZLIB_SUFFIX = Buffer.from([0x00, 0x00, 0xff, 0xff]);

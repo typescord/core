@@ -1,10 +1,10 @@
+import EventEmitter from 'events';
 import { Snowflake } from 'discord-api-types';
 import merge from 'lodash.merge';
-import EventEmitter from 'events';
 import { CloseEvent } from 'ws';
 import { WebSocketManager } from '../gateway/WebSocketManager';
-import { Events } from '../utils/events';
 import { DeepRequired } from '../utils/types';
+import { Events } from '../gateway/Events';
 import { BaseClient, BaseClientOptions } from './BaseClient';
 
 interface ClientEvents extends Record<Events, readonly unknown[]> {

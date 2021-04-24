@@ -1,10 +1,10 @@
 import EventEmitter from 'events';
 import { promisify } from 'util';
-import { GatewayReceivePayload, GatewayDispatchEvents } from 'discord-api-types/gateway/v8';
 import { Snowflake } from 'discord-api-types';
+import { GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { CloseEvent } from 'ws';
 import { Client } from '../clients';
-import { Events } from '../utils/events';
+import { Events } from './Events';
 import { WebSocketClient, WebSocketEvents } from './WebSocketClient';
 
 export const enum Status {
