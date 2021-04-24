@@ -1,17 +1,18 @@
 import { EventEmitter } from 'events';
-import { constants, createInflate, Inflate } from 'zlib';
 import { encode } from 'querystring';
 import { Readable } from 'stream';
-import WebSocket, { ErrorEvent } from 'ws';
+import { constants, createInflate, Inflate } from 'zlib';
+import WebSocket, { CloseEvent, ErrorEvent } from 'ws';
 import {
 	GatewayDispatchEvents,
 	GatewayOPCodes,
 	GatewayReceivePayload,
-	Snowflake,
 	GatewaySendPayload,
+	Snowflake,
 } from 'discord-api-types';
 import { Client } from '../clients/Client';
 import { once, rejectOnce } from '../utils/events';
+import { Events } from './Events';
 import { Status, WebSocketManager } from './WebSocketManager';
 
 const ZLIB_SUFFIX = Buffer.from([0x00, 0x00, 0xff, 0xff]);
@@ -157,14 +158,14 @@ export class WebSocketClient extends EventEmitter {
 	}
 
 	private onError(event: ErrorEvent) {
-		const error = event.error ? event.error : event;
-		if (!error) {
+		if (!event.error) {
 			return;
 		}
-		// this.client.emit(Events.SHARD_ERROR, error, this.id);
+
+		this.client.emit(Events.GATEWAY_ERROR, event.error);
 	}
 
-	private onClose() {
+	private onClose(event: CloseEvent) {
 		if (this.sequence !== -1) {
 			this.closeSequence = this.sequence;
 		}
@@ -178,7 +179,7 @@ export class WebSocketClient extends EventEmitter {
 		}
 
 		this.status = Status.DISCONNECTED;
-		// this.emit(ShardEvents.CLOSE, event);
+		this.emit(WebSocketEvents.CLOSE, event);
 	}
 
 	private onPacket(packet?: GatewayReceivePayload): void {
@@ -188,7 +189,7 @@ export class WebSocketClient extends EventEmitter {
 
 		if ('t' in packet) {
 			if (packet.t === GatewayDispatchEvents.Ready) {
-				// this.emit(ShardEvents.RESUMED);
+				this.emit(WebSocketEvents.RESUMED);
 
 				this.sessionId = packet.d.session_id;
 				this.expectedGuilds = new Set(packet.d.guilds.map((guild) => guild.id));
@@ -197,7 +198,7 @@ export class WebSocketClient extends EventEmitter {
 
 				this.sendHeartbeat();
 			} else if (packet.t === GatewayDispatchEvents.Resumed) {
-				// this.emit(ShardEvents.RESUMED);
+				this.emit(WebSocketEvents.RESUMED);
 
 				this.status = Status.READY;
 				this.lastHeartbeatAcked = true;
@@ -230,7 +231,7 @@ export class WebSocketClient extends EventEmitter {
 				this.sequence = -1;
 				this.sessionId = undefined;
 				this.status = Status.RECONNECTING;
-				// this.emit(ShardEvents.INVALID_SESSION);
+				this.emit(WebSocketEvents.INVALID_SESSION);
 				break;
 
 			case GatewayOPCodes.HeartbeatAck:
@@ -260,7 +261,7 @@ export class WebSocketClient extends EventEmitter {
 
 		if (!this.expectedGuilds?.size) {
 			this.status = Status.READY;
-			// this.emit(ShardEvents.ALL_READY);
+			this.emit(WebSocketEvents.READY);
 
 			return;
 		}
@@ -268,7 +269,7 @@ export class WebSocketClient extends EventEmitter {
 		this.readyTimeout = this.client.setTimeout(() => {
 			this.readyTimeout = undefined;
 			this.status = Status.READY;
-			// this.emit(ShardEvents.ALL_READY, this.expectedGuilds);
+			this.emit(WebSocketEvents.READY, this.expectedGuilds);
 		}, 15000);
 	}
 
@@ -463,6 +464,6 @@ export class WebSocketClient extends EventEmitter {
 	}
 
 	private emitDestroyed(): void {
-		// this.emit(ShardEvents.DESTROYED);
+		this.emit(WebSocketEvents.DESTROYED);
 	}
 }
