@@ -1,6 +1,6 @@
 import { Snowflake } from 'discord-api-types';
 import merge from 'lodash.merge';
-import EventEmitter from 'node:events';
+import EventEmitter from 'events';
 import { CloseEvent } from 'ws';
 import { WebSocketManager } from '../gateway/WebSocketManager';
 import { Events } from '../utils/events';
