@@ -69,7 +69,7 @@ export class WebSocketManager extends EventEmitter {
 
 		if (!this.webSocketClient.eventsAttached) {
 			this.webSocketClient.on(WebSocketEvents.READY, (unavailableGuilds: Set<Snowflake>) => {
-				this.client.emit(Events.WEBSOCKET_READY, unavailableGuilds);
+				this.client.emit(Events.GATEWAY_READY, unavailableGuilds);
 
 				this.reconnecting = false;
 				this.triggerClientReady();
@@ -77,7 +77,7 @@ export class WebSocketManager extends EventEmitter {
 
 			this.webSocketClient.on(WebSocketEvents.CLOSE, (event: CloseEvent) => {
 				if (event.code === 1000 ? this.destroyed : UNRECOVERABLE_CLOSE_CODES.has(event.code)) {
-					this.client.emit(Events.WEBSOCKET_DISCONNECTING, event);
+					this.client.emit(Events.GATEWAY_DISCONNECTION, event);
 					return;
 				}
 
@@ -86,7 +86,7 @@ export class WebSocketManager extends EventEmitter {
 					this.webSocketClient.sessionId = undefined;
 				}
 
-				this.client.emit(Events.WEBSOCKET_RECONNECTING);
+				this.client.emit(Events.GATEWAY_RECONNECTION);
 
 				if (!this.webSocketClient?.sessionId) {
 					this.webSocketClient?.destroy({ reset: true, emit: false });
@@ -96,11 +96,11 @@ export class WebSocketManager extends EventEmitter {
 			});
 
 			this.webSocketClient.on(WebSocketEvents.INVALID_SESSION, () => {
-				this.client.emit(Events.WEBSOCKET_RECONNECTING);
+				this.client.emit(Events.GATEWAY_RECONNECTION);
 			});
 
 			this.webSocketClient.on(WebSocketEvents.DESTROYED, () => {
-				this.client.emit(Events.WEBSOCKET_RECONNECTING);
+				this.client.emit(Events.GATEWAY_RECONNECTION);
 				this.reconnect();
 			});
 

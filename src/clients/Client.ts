@@ -9,10 +9,10 @@ import { BaseClient, BaseClientOptions } from './BaseClient';
 
 interface ClientEvents extends Record<Events, readonly unknown[]> {
 	ready: [];
-	websocketDisconnect: [CloseEvent];
-	websocketError: [Error];
-	websocketReady: [Set<Snowflake>];
-	websocketReconnecting: [];
+	gatewayDisconnection: [CloseEvent];
+	gatewayError: [Error];
+	gatewayReady: [Set<Snowflake>];
+	gatewayReconnection: [];
 }
 
 export interface Client extends EventEmitter {

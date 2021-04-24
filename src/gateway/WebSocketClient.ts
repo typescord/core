@@ -162,7 +162,7 @@ export class WebSocketClient extends EventEmitter {
 			return;
 		}
 
-		this.client.emit(Events.WEBSOCKET_ERROR, event.error);
+		this.client.emit(Events.GATEWAY_ERROR, event.error);
 	}
 
 	private onClose(event: CloseEvent) {
