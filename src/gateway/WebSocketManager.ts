@@ -101,7 +101,6 @@ export class WebSocketManager extends EventEmitter {
 
 			this.webSocketClient.on(WebSocketEvents.DESTROYED, () => {
 				this.client.emit(Events.WEBSOCKET_RECONNECTING);
-
 				this.reconnect();
 			});
 
