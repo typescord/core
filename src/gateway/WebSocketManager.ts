@@ -78,7 +78,6 @@ export class WebSocketManager extends EventEmitter {
 			this.webSocketClient.on(WebSocketEvents.CLOSE, (event: CloseEvent) => {
 				if (event.code === 1000 ? this.destroyed : UNRECOVERABLE_CLOSE_CODES.has(event.code)) {
 					this.client.emit(Events.WEBSOCKET_DISCONNECTING, event);
-
 					return;
 				}
 
