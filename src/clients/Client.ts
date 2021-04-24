@@ -9,7 +9,7 @@ import { BaseClient, BaseClientOptions } from './BaseClient';
 
 interface ClientEvents extends Record<Events, readonly unknown[]> {
 	ready: [];
-	websocketDisconnecting: [CloseEvent];
+	websocketDisconnect: [CloseEvent];
 	websocketError: [Error];
 	websocketReady: [Set<Snowflake>];
 	websocketReconnecting: [];
