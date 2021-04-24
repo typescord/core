@@ -114,7 +114,7 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 	},
 };
 
-//eslint-disable-next-line no-redeclare
+// eslint-disable-next-line no-redeclare
 export class Client extends BaseClient {
 	public readonly options!: DeepRequired<ClientOptions>;
 	public webSocket = new WebSocketManager(this);
