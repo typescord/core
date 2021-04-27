@@ -36,9 +36,9 @@
 		"ws": "^7.4.5"
 	},
 	"devDependencies": {
-		"@types/jest": "^26.0.22",
+		"@types/jest": "^26.0.23",
 		"@types/lodash.merge": "^4.6.6",
-		"@types/node": "^14.14.41",
+		"@types/node": "^15.0.0",
 		"@types/ws": "^7.4.1",
 		"@typescord/erlpack": "^0.7.0",
 		"@typescord/eslint-config": "^0.2.1",
@@ -46,8 +46,8 @@
 		"@typescord/prettier-config": "^0.1.2",
 		"@typescript-eslint/eslint-plugin": "^4.22.0",
 		"@typescript-eslint/parser": "^4.22.0",
-		"eslint": "^7.24.0",
-		"eslint-config-prettier": "^8.2.0",
+		"eslint": "^7.25.0",
+		"eslint-config-prettier": "^8.3.0",
 		"eslint-import-resolver-node": "^0.3.4",
 		"eslint-plugin-import": "^2.22.1",
 		"eslint-plugin-prettier": "^3.4.0",

@@ -1,17 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { EventEmitter, once as $once } from 'events';
+import { once as $once } from 'events';
 
-declare module 'events' {
-	// eslint-disable-next-line @typescript-eslint/no-shadow
-	class EventEmitter {
-		public static once(emitter: EventEmitter, event: string | symbol, options: { signal: any }): Promise<unknown[]>;
-	}
+interface NodeEventTarget {
+	once(event: string | symbol, listener: (...args: any[]) => void): this;
 }
 
-export function once(emitter: EventEmitter, name: string, signal: unknown): Promise<any> {
+export function once(emitter: NodeEventTarget, name: string, signal: AbortSignal): Promise<any> {
 	return $once(emitter, name, { signal }).then(([arg]) => arg);
 }
 
-export function rejectOnce(emitter: EventEmitter, name: string, signal: unknown): Promise<any> {
+export function rejectOnce(emitter: NodeEventTarget, name: string, signal: AbortSignal): Promise<any> {
 	return once(emitter, name, signal).then(Promise.reject);
 }

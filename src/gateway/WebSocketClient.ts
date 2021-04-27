@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
 import { encode } from 'querystring';
-import { Readable } from 'stream';
-import { constants, createInflate, Inflate } from 'zlib';
+import { Inflate, constants, createInflate } from 'zlib';
 import WebSocket, { CloseEvent, ErrorEvent } from 'ws';
 import {
 	GatewayDispatchEvents,
@@ -15,14 +14,14 @@ import { once, rejectOnce } from '../utils/events';
 import { Events } from './Events';
 import { Status, WebSocketManager } from './WebSocketManager';
 
-const ZLIB_SUFFIX = Buffer.from([0x00, 0x00, 0xff, 0xff]);
-
 let erlpack: typeof import('@typescord/erlpack') | undefined;
 try {
 	// eslint-disable-next-line unicorn/prefer-module
 	erlpack = require('@typescord/erlpack');
 	// eslint-disable-next-line no-empty
 } catch {}
+
+const ZLIB_SUFFIX = 0xffff;
 
 const encoding = erlpack ? 'etf' : 'json';
 
@@ -54,8 +53,6 @@ interface RateLimit {
 
 export class WebSocketClient extends EventEmitter {
 	private connection?: WebSocket;
-	private chunks: Buffer[] = [];
-	private inflator?: Inflate;
 	private expectedGuilds?: Set<Snowflake>;
 	private readonly rateLimit: RateLimit;
 
@@ -66,6 +63,8 @@ export class WebSocketClient extends EventEmitter {
 	private lastPingTimestamp = -1;
 	private sequence = -1;
 	private closeSequence = 0;
+	private chunks?: Buffer[];
+	private inflate?: Inflate;
 
 	public readonly client: Client;
 	public ping = -1;
@@ -99,19 +98,24 @@ export class WebSocketClient extends EventEmitter {
 		};
 
 		if (this.client.options.ws.zlib) {
-			this.inflator = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 65535 });
+			this.chunks = [];
+			this.inflate = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 0xffff }).on('data', (chunk) =>
+				this.chunks!.push(chunk),
+			);
 			gatewayOptions.compress = 'zlib-stream';
 		}
 
 		this.status = this.status === Status.DISCONNECTED ? Status.RECONNECTING : Status.CONNECTING;
 
-		this.connection = new WebSocket(`${this.manager.gateway}?${encode(gatewayOptions)}`);
+		this.connection = new WebSocket(`${this.manager.gateway}?${encode(gatewayOptions)}`, {
+			perMessageDeflate: false,
+		});
+
 		this.connection.on('open', this.onOpen.bind(this));
 		this.connection.on('message', this.onMessage.bind(this));
 		this.connection.on('error', this.onError.bind(this));
 		this.connection.on('close', this.onClose.bind(this));
 
-		// @ts-expect-error waiting node 15 types
 		const ac = new AbortController();
 		return Promise.race<void>([
 			once(this, WebSocketEvents.READY, ac.signal),
@@ -127,31 +131,35 @@ export class WebSocketClient extends EventEmitter {
 		this.status = Status.NEARLY;
 	}
 
-	private async onMessage(data: string | Buffer): Promise<GatewayReceivePayload | undefined> {
-		if (typeof data === 'string') {
-			return JSON.parse(data);
-		}
+	private async onMessage(data: string | Buffer): Promise<void> {
+		let packet = data;
 
 		if (this.client.options.ws.zlib) {
-			this.chunks.push(data);
-			if (!data.slice(-4).equals(ZLIB_SUFFIX)) {
+			if (!this.inflate) {
+				this.inflate = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 0xffff }).on('data', (chunk) =>
+					this.chunks!.push(chunk),
+				);
+			}
+
+			this.inflate.write(data);
+			if ((data as Buffer).readUInt32BE(data.length - 4) !== ZLIB_SUFFIX) {
 				return;
 			}
 
-			data = await new Promise<Buffer>((resolve, reject) => {
-				const chunks: Buffer[] = [];
-				Readable.from(Buffer.concat(this.chunks))
-					.pipe(this.inflator!)
-					.on('data', chunks.push)
-					.on('end', () => resolve(Buffer.concat(chunks)))
-					.on('error', reject);
+			packet = await new Promise((resolve, reject) => {
+				this.inflate!.once('error', (error) => {
+					this.inflate = undefined;
+					reject(error);
+				}).flush(() => {
+					this.inflate!.removeListener('error', reject);
+					resolve(Buffer.concat(this.chunks!));
+				});
 			});
-
 			this.chunks = [];
 		}
 
 		try {
-			this.onPacket(unpack(data));
+			this.onPacket(unpack(packet as Buffer));
 		} catch {
 			// TODO: handle errors
 		}
@@ -166,6 +174,12 @@ export class WebSocketClient extends EventEmitter {
 	}
 
 	private onClose(event: CloseEvent) {
+		this.chunks = undefined;
+		if (this.inflate) {
+			this.inflate.close();
+			this.inflate = undefined;
+		}
+
 		if (this.sequence !== -1) {
 			this.closeSequence = this.sequence;
 		}
@@ -182,11 +196,7 @@ export class WebSocketClient extends EventEmitter {
 		this.emit(WebSocketEvents.CLOSE, event);
 	}
 
-	private onPacket(packet?: GatewayReceivePayload): void {
-		if (!packet) {
-			return;
-		}
-
+	private onPacket(packet: GatewayReceivePayload): void {
 		if ('t' in packet) {
 			if (packet.t === GatewayDispatchEvents.Ready) {
 				this.emit(WebSocketEvents.RESUMED);
@@ -255,7 +265,6 @@ export class WebSocketClient extends EventEmitter {
 	private checkReady() {
 		if (this.readyTimeout) {
 			this.client.clearTimeout(this.readyTimeout);
-
 			this.readyTimeout = undefined;
 		}
 
@@ -408,9 +417,15 @@ export class WebSocketClient extends EventEmitter {
 		}
 	}
 
-	public destroy({ closeCode = 1000, reset = false, emit = true } = {}): void {
-		this.setHeartbeatTimer(-1);
-		this.setHelloTimeout(-1);
+	public destroy({ closeCode = 1000, reset = false } = {}): void {
+		this.chunks = undefined;
+		if (this.inflate) {
+			this.inflate.close();
+			this.inflate = undefined;
+		}
+
+		this.setHeartbeatTimer();
+		this.setHelloTimeout();
 
 		if (this.connection) {
 			if (this.connection.readyState === WebSocket.OPEN) {
@@ -422,14 +437,9 @@ export class WebSocketClient extends EventEmitter {
 					this.connection.close(closeCode);
 					// eslint-disable-next-line no-empty
 				} catch {}
-
-				if (emit) {
-					this.emitDestroyed();
-				}
 			}
-		} else if (emit) {
-			this.emitDestroyed();
 		}
+		this.emit(WebSocketEvents.DESTROYED);
 
 		this.connection = undefined;
 		this.status = Status.DISCONNECTED;
@@ -448,7 +458,6 @@ export class WebSocketClient extends EventEmitter {
 
 		if (this.rateLimit.timer) {
 			this.client.clearTimeout(this.rateLimit.timer);
-
 			this.rateLimit.timer = undefined;
 		}
 	}
@@ -461,9 +470,5 @@ export class WebSocketClient extends EventEmitter {
 		this.connection.removeAllListeners('message');
 		this.connection.removeAllListeners('close');
 		this.connection.removeAllListeners('error');
-	}
-
-	private emitDestroyed(): void {
-		this.emit(WebSocketEvents.DESTROYED);
 	}
 }

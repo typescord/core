@@ -74,7 +74,7 @@ interface ClientOptions extends BaseClientOptions {
 		 */
 		largeThreshold?: number;
 		/**
-		 * Rate limits values. We recommend We recommend that you do not change
+		 * Rate limits values. We recommend that you do not change
 		 * these settings as you risk getting a rate limit if you do not respect
 		 * these limits: https://discord.com/developers/docs/topics/gateway#rate-limiting.
 		 */
