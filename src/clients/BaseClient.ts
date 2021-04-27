@@ -12,7 +12,7 @@ const kTimeouts = Symbol('kTimeouts');
 const kIntervals = Symbol('kIntervals');
 
 export interface BaseClientOptions {
-	http: {
+	http?: {
 		/**
 		 * The timeout of http requests, in milliseconds.
 		 * @default 10000
