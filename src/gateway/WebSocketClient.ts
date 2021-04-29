@@ -106,6 +106,7 @@ export class WebSocketClient extends EventEmitter {
 		}
 
 		this.status = this.status === Status.DISCONNECTED ? Status.RECONNECTING : Status.CONNECTING;
+		this.setHelloTimeout();
 
 		this.connection = new WebSocket(`${this.manager.gateway}?${encode(gatewayOptions)}`, {
 			perMessageDeflate: false,
@@ -185,8 +186,8 @@ export class WebSocketClient extends EventEmitter {
 		}
 		this.sequence = -1;
 
-		this.setHeartbeatTimer();
-		this.setHelloTimeout();
+		this.setHeartbeatTimer(-1);
+		this.setHelloTimeout(true);
 
 		if (this.connection) {
 			this.cleanupConnection();
@@ -225,7 +226,7 @@ export class WebSocketClient extends EventEmitter {
 
 		switch (packet.op) {
 			case GatewayOPCodes.Hello:
-				this.setHelloTimeout(-1);
+				this.setHelloTimeout(true);
 				this.setHeartbeatTimer(packet.d.heartbeat_interval);
 				this.identify();
 				break;
@@ -283,8 +284,8 @@ export class WebSocketClient extends EventEmitter {
 		}, 15000);
 	}
 
-	private setHelloTimeout(time?: number) {
-		if (!time) {
+	private setHelloTimeout(reset = false) {
+		if (reset) {
 			if (this.helloTimeout) {
 				this.client.clearTimeout(this.helloTimeout);
 				this.helloTimeout = undefined;
@@ -297,8 +298,8 @@ export class WebSocketClient extends EventEmitter {
 		}, 20000);
 	}
 
-	private setHeartbeatTimer(time?: number) {
-		if (!time) {
+	private setHeartbeatTimer(time: number) {
+		if (time === -1) {
 			if (this.heartbeatInterval) {
 				this.client.clearInterval(this.heartbeatInterval);
 				this.heartbeatInterval = undefined;
@@ -423,8 +424,8 @@ export class WebSocketClient extends EventEmitter {
 			this.inflate = undefined;
 		}
 
-		this.setHeartbeatTimer();
-		this.setHelloTimeout();
+		this.setHeartbeatTimer(-1);
+		this.setHelloTimeout(true);
 
 		if (this.connection) {
 			if (this.connection.readyState === WebSocket.OPEN) {
