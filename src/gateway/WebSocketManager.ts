@@ -160,23 +160,21 @@ export class WebSocketManager extends EventEmitter {
 		this.webSocketClient?.destroy({ closeCode: 1000, reset: true, emit: false });
 	}
 
-	public handlePacket(packet?: GatewayReceivePayload): boolean {
+	public handlePacket(packet?: GatewayReceivePayload): void {
 		if (this.packetQueue.length > 0) {
 			const packetFromQueue = this.packetQueue.shift();
-			this.handlePacket(packetFromQueue);
+			setImmediate(() => this.handlePacket(packetFromQueue));
 		}
 
 		if (!packet) {
-			return true;
+			return;
 		}
 
 		if ('t' in packet && this.status !== Status.READY && !BeforeReadyWhitelist.has(packet.t)) {
 			this.packetQueue.push(packet);
-			return false;
+			// return;
 		}
 
 		// TODO: handle the packet here
-
-		return true;
 	}
 }
