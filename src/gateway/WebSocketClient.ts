@@ -160,8 +160,8 @@ export class WebSocketClient extends EventEmitter {
 
 		try {
 			this.onPacket(unpack(packet as Buffer));
-		} catch {
-			// TODO: handle errors
+		} catch (error) {
+			this.client.emit(Events.GATEWAY_ERROR, error);
 		}
 	}
 
@@ -406,8 +406,8 @@ export class WebSocketClient extends EventEmitter {
 				return;
 			}
 
-			this.connection.send(pack(item), () => {
-				// TODO: handle error
+			this.connection.send(pack(item), (error) => {
+				this.client.emit(Events.GATEWAY_ERROR, error);
 			});
 
 			this.rateLimit.remaining--;
