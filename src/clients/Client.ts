@@ -126,6 +126,10 @@ export class Client extends BaseClient {
 		super('Bot', options ? merge(defaultOptions, options) : defaultOptions);
 	}
 
+	public get ping(): number | undefined {
+		return this.webSocket.ping;
+	}
+
 	public async login(token: string): Promise<void> {
 		super.token = token;
 
@@ -133,7 +137,6 @@ export class Client extends BaseClient {
 			await this.webSocket.connect();
 		} catch (error) {
 			this.destroy();
-
 			throw error;
 		}
 	}
@@ -141,9 +144,5 @@ export class Client extends BaseClient {
 	public destroy(): void {
 		super.destroy();
 		this.webSocket.destroy();
-	}
-
-	public get ping(): number | undefined {
-		return this.webSocket.ping;
 	}
 }
