@@ -1,5 +1,5 @@
-/* import type * as dapi from 'discord-api-types/rest/v8';
-import type { Snowflake } from 'discord-api-types';
+import type * as dapi from 'discord-api-types/rest/v8';
+/*import type { Snowflake } from 'discord-api-types';
 import type { BaseRequestOptions } from '.';
 
 // JSON RequestOptions
@@ -27,4 +27,12 @@ interface JQFRO<J, Q> extends JRO<J>, QRO<Q>, FRO {}
 interface JFRO<J> extends JRO<J>, FRO {} */
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface Routes {}
+export interface Routes {
+	gateway: {
+		get(): Promise<dapi.RESTGetAPIGatewayResult>;
+
+		bot: {
+			get(): Promise<dapi.RESTGetAPIGatewayBotResult>;
+		};
+	};
+}

@@ -4,6 +4,7 @@ import { Snowflake } from 'discord-api-types';
 import { GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { CloseEvent } from 'ws';
 import { Client } from '../clients';
+import { Exception } from '../exceptions';
 import { Events } from './Events';
 import { WebSocketClient, WebSocketEvents } from './WebSocketClient';
 
@@ -29,10 +30,10 @@ const BeforeReadyWhitelist = new Set([
 	GatewayDispatchEvents.GuildMemberRemove,
 ]);
 
-/*const WEBSOCKET_CODES = {
+const WEBSOCKET_CODES = {
 	1000: 'WS_CLOSE_REQUESTED',
 	4004: 'TOKEN_INVALID',
-} as const;*/
+} as const;
 
 const UNRECOVERABLE_CLOSE_CODES = new Set([4004]);
 const UNRESUMABLE_CLOSE_CODES = new Set([1000]);
@@ -43,7 +44,7 @@ export class WebSocketManager extends EventEmitter {
 	private status = Status.IDLE;
 	private destroyed = false;
 	private reconnecting = false;
-	public gateway = 'wss://gateway.discord.gg/';
+	public gateway?: string;
 
 	public constructor(public readonly client: Client) {
 		super();
@@ -54,16 +55,16 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	public async connect(): Promise<void> {
-		/*const invalidToken = new Exception(WEBSOCKET_CODES[GatewayCloseCodes.AuthenticationFailed]);
-		const { url: gatewayURL } = await this.client.api.gateway.bot.get().catch((error) => {
-			throw error.httpStatus === 401 ? invalidToken : error;
+		const { url: gatewayUrl } = await this.client.api.gateway.bot.get().catch((error) => {
+			throw error.httpStatus === 401 ? new Exception('TOKEN_INVALID') : error;
 		});
 
-		this.gateway = `${gatewayURL}/`;*/
+		this.gateway = gatewayUrl;
 
 		this.createClient();
 	}
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	private async createClient(): Promise<void> {
 		this.webSocketClient = new WebSocketClient(this);
 
@@ -109,8 +110,14 @@ export class WebSocketManager extends EventEmitter {
 
 		try {
 			await this.webSocketClient.connect();
-		} catch {
-			// TODO: handle errors
+		} catch (error) {
+			if (error?.code && UNRECOVERABLE_CLOSE_CODES.has(error.code)) {
+				throw new Exception(WEBSOCKET_CODES[error.code as keyof typeof WEBSOCKET_CODES]);
+			} else if (!error || error.code) {
+				this.reconnect();
+			} else {
+				throw error;
+			}
 		}
 	}
 
