@@ -56,7 +56,7 @@ export class WebSocketManager extends EventEmitter {
 
 	public async connect(): Promise<void> {
 		const { url: gatewayUrl } = await this.client.api.gateway.bot.get().catch((error) => {
-			throw error.httpStatus === 401 ? invalidToken : error;
+			throw error.httpStatus === 401 ? new Exception('TOKEN_INVALID') : error;
 		});
 
 		this.gateway = gatewayUrl;
