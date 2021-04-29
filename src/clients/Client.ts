@@ -94,7 +94,7 @@ interface ClientOptions extends BaseClientOptions {
 			time?: number;
 		};
 	};
-} // temporary
+}
 
 const defaultOptions: DeepRequired<ClientOptions> = {
 	http: {
