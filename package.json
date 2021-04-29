@@ -5,7 +5,7 @@
 	"main": "build/index.js",
 	"prettier": "@typescord/prettier-config",
 	"scripts": {
-		"prepublish": "yarn build",
+		"prepublishOnly": "yarn build",
 		"build": "rimraf build && tsc -p tsconfig.prod.json",
 		"lint": "eslint src --ext ts",
 		"lint-fix": "yarn lint --fix",
