@@ -1,5 +1,4 @@
 import EventEmitter from 'events';
-import { promisify } from 'util';
 import { GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { CloseEvent } from 'ws';
 import { Snowflake } from 'discord-api-types';
@@ -115,7 +114,6 @@ export class WebSocketManager extends EventEmitter {
 			if (error?.code && UNRECOVERABLE_CLOSE_CODES.has(error.code)) {
 				throw new Exception(WEBSOCKET_CODES[error.code as keyof typeof WEBSOCKET_CODES]);
 			} else if (!error || error.code) {
-				await promisify(this.client.setTimeout)(5000);
 				this.reconnect();
 			} else {
 				throw error;
@@ -134,7 +132,7 @@ export class WebSocketManager extends EventEmitter {
 			await this.createClient();
 		} catch (error) {
 			if (error.httpStatus !== 401) {
-				await promisify(this.client.setTimeout)(5000);
+				await new Promise((resolve) => this.client.setTimeout(resolve, 5000));
 				this.reconnecting = false;
 				return this.reconnect();
 			}

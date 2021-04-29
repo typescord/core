@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable unicorn/no-array-for-each, unicorn/no-array-callback-reference */
 
 import { EventEmitter } from 'events';
@@ -83,7 +84,7 @@ export class BaseClient extends EventEmitter {
 		return this.options.http.api;
 	}
 
-	public setImmediate<T extends unknown[]>(callback: (...args: T) => void, ...args: T): NodeJS.Immediate {
+	public setImmediate(callback: (...args: any[]) => void, ...args: any[]): NodeJS.Immediate {
 		const immediateId = setImmediate(() => {
 			this[kImmediates].delete(immediateId);
 			callback(...args);
@@ -98,7 +99,7 @@ export class BaseClient extends EventEmitter {
 		this[kImmediates].delete(immediateId);
 	}
 
-	public setTimeout<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
+	public setTimeout(callback: (...args: any[]) => void, ms?: number, ...args: any[]): NodeJS.Timeout {
 		const timeoutId = setTimeout(() => {
 			this[kTimeouts].delete(timeoutId);
 			callback(...args);
@@ -113,7 +114,7 @@ export class BaseClient extends EventEmitter {
 		this[kTimeouts].delete(timeoutId);
 	}
 
-	public setInterval<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
+	public setInterval(callback: (...args: any[]) => void, ms?: number, ...args: any[]): NodeJS.Timeout {
 		const intervalId = setInterval(() => callback(...args), ms);
 
 		this[kIntervals].add(intervalId);

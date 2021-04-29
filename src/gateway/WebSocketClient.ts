@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import events from 'events';
 import { encode } from 'querystring';
 import { Inflate, constants, createInflate } from 'zlib';
 import WebSocket, { CloseEvent, ErrorEvent } from 'ws';
@@ -10,7 +10,6 @@ import {
 	Snowflake,
 } from 'discord-api-types';
 import { Client } from '../clients';
-import { once, rejectOnce } from '../utils/events';
 import { Events } from './Events';
 import { Status, WebSocketManager } from './WebSocketManager';
 
@@ -43,6 +42,22 @@ const pack = erlpack ? erlpack.pack : JSON.stringify;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const unpack: (data: Buffer) => any = erlpack ? erlpack.unpack : (data: Buffer) => JSON.parse(data.toString('utf8'));
 
+interface NodeEventTarget {
+	once(event: string | symbol, listener: (...args: unknown[]) => void): this;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function once(emitter: NodeEventTarget, name: string, signal: AbortSignal): Promise<any> {
+	return events.once(emitter, name, { signal }).then(([arg]) => arg);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rejectOnce(emitter: NodeEventTarget, name: string, signal: AbortSignal): Promise<any> {
+	return once(emitter, name, signal).then((error) =>
+		Promise.reject(typeof error === 'number' ? { code: error } : error),
+	);
+}
+
 interface RateLimit {
 	queue: GatewaySendPayload[];
 	limit: number;
@@ -51,7 +66,7 @@ interface RateLimit {
 	timer?: NodeJS.Timeout;
 }
 
-export class WebSocketClient extends EventEmitter {
+export class WebSocketClient extends events.EventEmitter {
 	private connection?: WebSocket;
 	private expectedGuilds?: Set<Snowflake>;
 	private readonly rateLimit: RateLimit;
@@ -124,7 +139,7 @@ export class WebSocketClient extends EventEmitter {
 			rejectOnce(this, WebSocketEvents.CLOSE, ac.signal),
 			rejectOnce(this, WebSocketEvents.INVALID_SESSION, ac.signal),
 			rejectOnce(this, WebSocketEvents.DESTROYED, ac.signal),
-		]).finally(ac.abort);
+		]).finally(() => ac.abort());
 	}
 
 	private onOpen(): void {
