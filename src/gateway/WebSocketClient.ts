@@ -409,10 +409,7 @@ export class WebSocketClient extends EventEmitter {
 				return;
 			}
 
-			this.connection.send(pack(item), (error) => {
-				this.client.emit(Events.GATEWAY_ERROR, error);
-			});
-
+			this.connection.send(pack(item), (error) => error && this.client.emit(Events.GATEWAY_ERROR, error));
 			this.rateLimit.remaining--;
 		}
 	}

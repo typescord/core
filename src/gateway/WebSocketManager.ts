@@ -1,8 +1,8 @@
 import EventEmitter from 'events';
 import { promisify } from 'util';
-import { Snowflake } from 'discord-api-types';
 import { GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { CloseEvent } from 'ws';
+import { Snowflake } from 'discord-api-types';
 import { Client } from '../clients';
 import { Exception } from '../exceptions';
 import { Events } from './Events';
@@ -33,10 +33,12 @@ const BeforeReadyWhitelist = new Set([
 const WEBSOCKET_CODES = {
 	1000: 'WS_CLOSE_REQUESTED',
 	4004: 'TOKEN_INVALID',
+	4013: 'INVALID_INTENTS',
+	4014: 'DISALLOWED_INTENTS',
 } as const;
 
-const UNRECOVERABLE_CLOSE_CODES = new Set([4004]);
-const UNRESUMABLE_CLOSE_CODES = new Set([1000]);
+const UNRECOVERABLE_CLOSE_CODES = new Set([4004, 4013, 4014]);
+const UNRESUMABLE_CLOSE_CODES = new Set([1000, 4006, 4007]);
 
 export class WebSocketManager extends EventEmitter {
 	private webSocketClient?: WebSocketClient;
@@ -61,7 +63,7 @@ export class WebSocketManager extends EventEmitter {
 
 		this.gateway = gatewayUrl;
 
-		this.createClient();
+		return this.createClient();
 	}
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -71,7 +73,6 @@ export class WebSocketManager extends EventEmitter {
 		if (!this.webSocketClient.eventsAttached) {
 			this.webSocketClient.on(WebSocketEvents.READY, (unavailableGuilds: Set<Snowflake>) => {
 				this.client.emit(Events.GATEWAY_READY, unavailableGuilds);
-
 				this.reconnecting = false;
 				this.triggerClientReady();
 			});
@@ -114,6 +115,7 @@ export class WebSocketManager extends EventEmitter {
 			if (error?.code && UNRECOVERABLE_CLOSE_CODES.has(error.code)) {
 				throw new Exception(WEBSOCKET_CODES[error.code as keyof typeof WEBSOCKET_CODES]);
 			} else if (!error || error.code) {
+				await promisify(this.client.setTimeout)(5000);
 				this.reconnect();
 			} else {
 				throw error;
