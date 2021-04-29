@@ -1,4 +1,5 @@
 export const enum Events {
+	RAW = 'raw',
 	CLIENT_READY = 'ready',
 	GATEWAY_DISCONNECTION = 'gatewayDisconnection',
 	GATEWAY_ERROR = 'gatewayError',

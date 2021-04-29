@@ -9,7 +9,7 @@ import {
 	GatewaySendPayload,
 	Snowflake,
 } from 'discord-api-types';
-import { Client } from '../clients/Client';
+import { Client } from '../clients';
 import { once, rejectOnce } from '../utils/events';
 import { Events } from './Events';
 import { Status, WebSocketManager } from './WebSocketManager';
@@ -197,6 +197,8 @@ export class WebSocketClient extends EventEmitter {
 	}
 
 	private onPacket(packet: GatewayReceivePayload): void {
+		this.client.emit(Events.RAW, packet);
+
 		if ('t' in packet) {
 			if (packet.t === GatewayDispatchEvents.Ready) {
 				this.emit(WebSocketEvents.RESUMED);
