@@ -66,22 +66,18 @@ export class BaseClient extends EventEmitter {
 	private readonly [kIntervals] = new Set<NodeJS.Timeout>();
 
 	public readonly options: DeepRequired<BaseClientOptions>;
-	public readonly rest: HttpManager;
+	public readonly http: HttpManager;
 	public destroyed = false;
 	public token?: string;
 
 	protected constructor(public readonly tokenType: TokenType, options?: BaseClientOptions) {
 		super();
 		this.options = options ? merge(defaultOptions, options) : defaultOptions;
-		this.rest = new HttpManager(this);
+		this.http = new HttpManager(this);
 	}
 
 	public get api(): Routes {
-		return this.rest.api;
-	}
-
-	public get gateway(): string {
-		return this.options.http.api;
+		return this.http.api;
 	}
 
 	public setImmediate(callback: (...args: any[]) => void, ...args: any[]): NodeJS.Immediate {
