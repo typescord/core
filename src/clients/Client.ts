@@ -55,11 +55,6 @@ export interface Client extends EventEmitter {
 interface ClientOptions extends BaseClientOptions {
 	ws?: {
 		/**
-		 * URL of Discord's WebSocket gateway.
-		 * @default 'wss://gateway.discord.gg/'
-		 */
-		gateway?: string;
-		/**
 		 * Discord's gateway version.
 		 * @default 8
 		 */
@@ -105,7 +100,6 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 		api: 'https://discord.com/api/v8',
 	},
 	ws: {
-		gateway: 'wss://gateway.discord.gg/', // temporary
 		version: 7,
 		zlib: false,
 		largeThreshold: 50,
@@ -140,5 +134,9 @@ export class Client extends BaseClient {
 	public destroy(): void {
 		super.destroy();
 		this.webSocket.destroy();
+	}
+
+	public get ping(): number | undefined {
+		return this.webSocket.ping;
 	}
 }
