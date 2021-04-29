@@ -137,7 +137,6 @@ export class WebSocketManager extends EventEmitter {
 				return this.reconnect();
 			}
 
-			this.destroy();
 			this.client.destroy();
 		} finally {
 			this.reconnecting = false;

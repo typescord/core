@@ -10,9 +10,9 @@ import {
 	Snowflake,
 } from 'discord-api-types';
 import { Client } from '../clients';
+import { Exception } from '../exceptions';
 import { Events } from './Events';
 import { Status, WebSocketManager } from './WebSocketManager';
-import { Exception } from '../exceptions';
 
 let erlpack: typeof import('@typescord/erlpack') | undefined;
 try {
@@ -348,13 +348,14 @@ export class WebSocketClient extends events.EventEmitter {
 	}
 
 	private identify(): void {
+		return this.sessionId ? this.identifyResume() : this.identifyNew();
+	}
+
+	private identifyNew(): void {
 		if (!this.client.token) {
 			throw new Exception('TOKEN_MISSING');
 		}
-		return this.sessionId ? this.identifyResume(this.client.token) : this.identifyNew(this.client.token);
-	}
 
-	private identifyNew(token: string): void {
 		this.status = Status.IDENTIFYING;
 
 		this.send({
@@ -367,15 +368,19 @@ export class WebSocketClient extends events.EventEmitter {
 				},
 				compress: this.client.options.ws.zlib,
 				large_threshold: this.client.options.ws.largeThreshold,
-				token,
+				token: this.client.token,
 				intents: this.client.options.ws.intents,
 			},
 		});
 	}
 
-	private identifyResume(token: string): void {
+	private identifyResume(): void {
+		if (!this.client.token) {
+			throw new Exception('TOKEN_MISSING');
+		}
+
 		if (!this.sessionId) {
-			this.identifyNew(token);
+			this.identifyNew();
 			return;
 		}
 
@@ -384,7 +389,7 @@ export class WebSocketClient extends events.EventEmitter {
 		this.send({
 			op: GatewayOPCodes.Resume,
 			d: {
-				token,
+				token: this.client.token,
 				session_id: this.sessionId,
 				seq: this.closeSequence,
 			},

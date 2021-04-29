@@ -142,7 +142,7 @@ export class Client extends BaseClient {
 	}
 
 	public destroy(): void {
-		super.destroy();
 		this.webSocket.destroy();
+		super.destroy();
 	}
 }
