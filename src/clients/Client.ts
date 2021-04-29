@@ -71,6 +71,12 @@ interface ClientOptions extends BaseClientOptions {
 		 */
 		largeThreshold?: number;
 		/**
+		 * Enabled gateway intents for this connection.
+		 * https://discord.com/developers/docs/topics/gateway#gateway-intents
+		 * @default 513
+		 */
+		intents?: number;
+		/**
 		 * Rate limits values. We recommend that you do not change
 		 * these settings as you risk getting a rate limit if you do not respect
 		 * these limits: https://discord.com/developers/docs/topics/gateway#rate-limiting.
@@ -103,6 +109,7 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 		version: 7,
 		zlib: false,
 		largeThreshold: 50,
+		intents: 513,
 		rateLimits: {
 			limit: 120,
 			time: 6_000,

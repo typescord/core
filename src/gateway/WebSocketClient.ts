@@ -353,7 +353,7 @@ export class WebSocketClient extends EventEmitter {
 				compress: this.client.options.ws.zlib,
 				large_threshold: this.client.options.ws.largeThreshold,
 				token: this.client.token,
-				intents: 513, // temporary
+				intents: this.client.options.ws.intents,
 			},
 		});
 	}
