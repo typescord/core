@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import { GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { Snowflake } from 'discord-api-types';
 import merge from 'lodash.merge';
 import { CloseEvent } from 'ws';
@@ -8,6 +9,7 @@ import { Events } from '../gateway/Events';
 import { BaseClient, BaseClientOptions } from './BaseClient';
 
 interface ClientEvents extends Record<Events, readonly unknown[]> {
+	raw: [GatewayReceivePayload];
 	ready: [];
 	gatewayDisconnection: [CloseEvent];
 	gatewayError: [Error];
