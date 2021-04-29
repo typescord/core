@@ -60,7 +60,7 @@ export class WebSocketManager extends EventEmitter {
 			throw error.httpStatus === 401 ? invalidToken : error;
 		});
 
-		this.gateway = `${gatewayURL}/`;
+		this.gateway = gatewayUrl;
 
 		this.createClient();
 	}
