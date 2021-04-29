@@ -161,18 +161,14 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	public handlePacket(packet?: GatewayReceivePayload): void {
-		if (this.packetQueue.length > 0) {
-			const packetFromQueue = this.packetQueue.shift();
-			setImmediate(() => this.handlePacket(packetFromQueue));
-		}
-
-		if (!packet) {
+		if (packet && this.status !== Status.READY && 't' in packet && !BeforeReadyWhitelist.has(packet.t)) {
+			this.packetQueue.push(packet);
 			return;
 		}
 
-		if ('t' in packet && this.status !== Status.READY && !BeforeReadyWhitelist.has(packet.t)) {
-			this.packetQueue.push(packet);
-			// return;
+		if (this.packetQueue.length > 0) {
+			const packetFromQueue = this.packetQueue.shift();
+			setImmediate(() => this.handlePacket(packetFromQueue));
 		}
 
 		// TODO: handle the packet here
