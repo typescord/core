@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import { promisify } from 'util';
 import { Snowflake } from 'discord-api-types';
-import { GatewayCloseCodes, GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/gateway/v8';
+import { GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { CloseEvent } from 'ws';
 import { Client } from '../clients';
 import { Exception } from '../exceptions';
