@@ -12,6 +12,7 @@ import {
 import { Client } from '../clients';
 import { Events } from './Events';
 import { Status, WebSocketManager } from './WebSocketManager';
+import { Exception } from '../exceptions';
 
 let erlpack: typeof import('@typescord/erlpack') | undefined;
 try {
@@ -347,14 +348,13 @@ export class WebSocketClient extends events.EventEmitter {
 	}
 
 	private identify(): void {
-		return this.sessionId ? this.identifyResume() : this.identifyNew();
+		if (!this.client.token) {
+			throw new Exception('TOKEN_MISSING');
+		}
+		return this.sessionId ? this.identifyResume(this.client.token) : this.identifyNew(this.client.token);
 	}
 
-	private identifyNew(): void {
-		if (!this.client.token) {
-			return;
-		}
-
+	private identifyNew(token: string): void {
 		this.status = Status.IDENTIFYING;
 
 		this.send({
@@ -367,15 +367,15 @@ export class WebSocketClient extends events.EventEmitter {
 				},
 				compress: this.client.options.ws.zlib,
 				large_threshold: this.client.options.ws.largeThreshold,
-				token: this.client.token,
+				token,
 				intents: this.client.options.ws.intents,
 			},
 		});
 	}
 
-	private identifyResume(): void {
+	private identifyResume(token: string): void {
 		if (!this.sessionId) {
-			this.identifyNew();
+			this.identifyNew(token);
 			return;
 		}
 
@@ -384,7 +384,7 @@ export class WebSocketClient extends events.EventEmitter {
 		this.send({
 			op: GatewayOPCodes.Resume,
 			d: {
-				token: this.client.token!,
+				token,
 				session_id: this.sessionId,
 				seq: this.closeSequence,
 			},

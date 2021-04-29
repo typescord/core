@@ -113,7 +113,7 @@ export class WebSocketManager extends EventEmitter {
 		} catch (error) {
 			if (error?.code && UNRECOVERABLE_CLOSE_CODES.has(error.code)) {
 				throw new Exception(WEBSOCKET_CODES[error.code as keyof typeof WEBSOCKET_CODES]);
-			} else if (!error || error.code) {
+			} else if (!error || typeof error.code === 'number') {
 				this.reconnect();
 			} else {
 				throw error;
