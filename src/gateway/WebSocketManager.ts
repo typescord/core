@@ -73,7 +73,15 @@ export class WebSocketManager extends EventEmitter {
 			this.webSocketClient.on(WebSocketEvents.READY, (unavailableGuilds: Set<Snowflake>) => {
 				this.client.emit(Events.GATEWAY_READY, unavailableGuilds);
 				this.reconnecting = false;
-				this.triggerClientReady();
+
+				if (this.status === Status.READY) {
+					return;
+				}
+
+				this.status = Status.READY;
+				this.client.emit(Events.CLIENT_READY);
+
+				this.handlePacket();
 			});
 
 			this.webSocketClient.on(WebSocketEvents.CLOSE, (event: CloseEvent) => {
@@ -170,16 +178,5 @@ export class WebSocketManager extends EventEmitter {
 		// TODO: handle the packet here
 
 		return true;
-	}
-
-	private triggerClientReady(): void {
-		if (this.status === Status.READY) {
-			return;
-		}
-
-		this.status = Status.READY;
-		this.client.emit(Events.CLIENT_READY);
-
-		this.handlePacket();
 	}
 }
