@@ -122,7 +122,7 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		this.status = this.status === Status.DISCONNECTED ? Status.RECONNECTING : Status.CONNECTING;
-		this.setHelloTimeout();
+		this.updateHelloTimeout(true);
 
 		this.connection = new WebSocket(`${this.manager.gateway}?${encode(gatewayOptions)}`, {
 			perMessageDeflate: false,
@@ -202,8 +202,8 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 		this.sequence = -1;
 
-		this.setHeartbeatTimer(-1);
-		this.setHelloTimeout(true);
+		this.updateHeartbeatTimer(-1);
+		this.updateHelloTimeout();
 
 		if (this.connection) {
 			this.cleanupConnection();
@@ -242,8 +242,8 @@ export class WebSocketClient extends events.EventEmitter {
 
 		switch (packet.op) {
 			case GatewayOPCodes.Hello:
-				this.setHelloTimeout(true);
-				this.setHeartbeatTimer(packet.d.heartbeat_interval);
+				this.updateHelloTimeout();
+				this.updateHeartbeatTimer(packet.d.heartbeat_interval);
 				this.identify();
 				break;
 
@@ -300,7 +300,11 @@ export class WebSocketClient extends events.EventEmitter {
 		}, 15000);
 	}
 
-	private setHelloTimeout(reset = false) {
+	private updateHelloTimeout(reset = true) {
+		if (this.client.options.ws.helloTimeout === Infinity) {
+			return;
+		}
+
 		if (reset) {
 			if (this.helloTimeout) {
 				this.client.clearTimeout(this.helloTimeout);
@@ -311,10 +315,10 @@ export class WebSocketClient extends events.EventEmitter {
 
 		this.helloTimeout = this.client.setTimeout(() => {
 			this.destroy({ reset: true, closeCode: 4009 });
-		}, 20000);
+		}, this.client.options.ws.helloTimeout);
 	}
 
-	private setHeartbeatTimer(time: number) {
+	private updateHeartbeatTimer(time: number) {
 		if (time === -1) {
 			if (this.heartbeatInterval) {
 				this.client.clearInterval(this.heartbeatInterval);
@@ -441,8 +445,8 @@ export class WebSocketClient extends events.EventEmitter {
 			this.inflate = undefined;
 		}
 
-		this.setHeartbeatTimer(-1);
-		this.setHelloTimeout(true);
+		this.updateHeartbeatTimer(-1);
+		this.updateHelloTimeout();
 
 		if (this.connection) {
 			if (this.connection.readyState === WebSocket.OPEN) {

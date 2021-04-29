@@ -76,6 +76,14 @@ interface ClientOptions extends BaseClientOptions {
 		 */
 		intents?: number;
 		/**
+		 * The hello timeout, in milliseconds.
+		 * Destroys the Client if the Hello packet
+		 * is not received before the specified timeout.
+		 * If set to `Infinity`, the timeout will not be applied.
+		 * @default 20_000
+		 */
+		helloTimeout?: number;
+		/**
 		 * Rate limits values. We recommend that you do not change
 		 * these settings as you risk getting a rate limit if you do not respect
 		 * these limits: https://discord.com/developers/docs/topics/gateway#rate-limiting.
@@ -109,6 +117,7 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 		zlib: false,
 		largeThreshold: 50,
 		intents: 513,
+		helloTimeout: 20_000,
 		rateLimits: {
 			limit: 120,
 			time: 6_000,
