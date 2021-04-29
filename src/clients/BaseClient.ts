@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable unicorn/no-array-for-each, unicorn/no-array-callback-reference */
+/* eslint-disable @typescript-eslint/no-explicit-any, unicorn/no-array-for-each, unicorn/no-array-callback-reference */
 
 import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
