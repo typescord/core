@@ -2,18 +2,18 @@ import EventEmitter from 'events';
 import type { GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { Snowflake } from 'discord-api-types';
 import merge from 'lodash.merge';
-import type { CloseEvent } from 'ws';
 import { Events, WebSocketManager } from '../gateway';
 import type { DeepRequired } from '../utils/types';
+import { GatewayException } from '../exceptions';
 import { BaseClient, BaseClientOptions } from './BaseClient';
 
 interface ClientEvents extends Record<Events, readonly unknown[]> {
 	raw: [GatewayReceivePayload];
 	ready: [];
-	gatewayDisconnection: [CloseEvent];
+	gatewayDisconnection: [GatewayException];
 	gatewayError: [Error];
 	gatewayReady: [Set<Snowflake>];
-	gatewayReconnection: [];
+	gatewayReconnecting: [];
 }
 
 export interface Client extends EventEmitter {
@@ -88,7 +88,7 @@ interface ClientOptions extends BaseClientOptions {
 		 * these settings as you risk getting a rate limit if you do not respect
 		 * these limits: https://discord.com/developers/docs/topics/gateway#rate-limiting.
 		 */
-		rateLimits?: {
+		rateLimit?: {
 			/**
 			 * Max commands that can be made in `time`.
 			 * @default 120
@@ -118,7 +118,7 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 		largeThreshold: 50,
 		intents: 513,
 		helloTimeout: 20_000,
-		rateLimits: {
+		rateLimit: {
 			limit: 120,
 			time: 6_000,
 		},
@@ -140,6 +140,8 @@ export class Client extends BaseClient {
 
 	public async login(token: string): Promise<void> {
 		super.token = token;
+		super.destroyed = false;
+		this.webSocket.destroyed = false;
 
 		try {
 			await this.webSocket.connect();

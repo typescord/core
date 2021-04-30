@@ -1,22 +1,21 @@
 import EventEmitter from 'events';
 import { GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/gateway/v8';
-import { CloseEvent } from 'ws';
 import { Snowflake } from 'discord-api-types';
 import { Client } from '../clients';
-import { Exception } from '../exceptions';
+import { Exception, GatewayException } from '../exceptions';
 import { Events } from './Events';
 import { WebSocketClient, WebSocketEvents } from './WebSocketClient';
 
 export const enum Status {
-	READY,
-	CONNECTING,
-	RECONNECTING,
-	IDLE,
-	NEARLY,
-	DISCONNECTED,
-	WAITING_FOR_GUILDS,
-	IDENTIFYING,
-	RESUMING,
+	Ready,
+	Connecting,
+	Reconnecting,
+	Idle,
+	Nearly,
+	Disconnected,
+	WaitingForGuilds,
+	Identifying,
+	Resuming,
 }
 
 const BeforeReadyWhitelist = new Set([
@@ -42,10 +41,10 @@ const UNRESUMABLE_CLOSE_CODES = new Set([1000, 4006, 4007]);
 export class WebSocketManager extends EventEmitter {
 	private webSocketClient?: WebSocketClient;
 	private packetQueue: GatewayReceivePayload[] = [];
-	private status = Status.IDLE;
-	private destroyed = false;
+	private status = Status.Idle;
 	private reconnecting = false;
-	public gateway?: string;
+	public destroyed = false;
+	public gatewayUrl?: string;
 
 	public constructor(public readonly client: Client) {
 		super();
@@ -60,42 +59,41 @@ export class WebSocketManager extends EventEmitter {
 			throw error.httpStatus === 401 ? new Exception('TOKEN_INVALID') : error;
 		});
 
-		this.gateway = gatewayUrl;
+		this.gatewayUrl = gatewayUrl;
 
+		this.webSocketClient = new WebSocketClient(this);
 		return this.createClient();
 	}
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	private async createClient(): Promise<void> {
-		this.webSocketClient = new WebSocketClient(this);
-
-		if (!this.webSocketClient.eventsAttached) {
-			this.webSocketClient.on(WebSocketEvents.READY, (unavailableGuilds: Set<Snowflake>) => {
-				this.client.emit(Events.GATEWAY_READY, unavailableGuilds);
+		if (!this.webSocketClient!.eventsAttached) {
+			this.webSocketClient!.on(WebSocketEvents.Ready, (unavailableGuilds: Set<Snowflake>) => {
+				this.client.emit(Events.GatewayReady, unavailableGuilds);
 				this.reconnecting = false;
 
-				if (this.status === Status.READY) {
+				if (this.status === Status.Ready) {
 					return;
 				}
 
-				this.status = Status.READY;
-				this.client.emit(Events.CLIENT_READY);
+				this.status = Status.Ready;
+				this.client.emit(Events.ClientReady);
 
 				this.handlePacket();
 			});
 
-			this.webSocketClient.on(WebSocketEvents.CLOSE, (event: CloseEvent) => {
-				if (event.code === 1000 ? this.destroyed : UNRECOVERABLE_CLOSE_CODES.has(event.code)) {
-					this.client.emit(Events.GATEWAY_DISCONNECTION, event);
+			this.webSocketClient!.on(WebSocketEvents.Close, (error: GatewayException) => {
+				if (error.closeCode === 1000 ? this.destroyed : UNRECOVERABLE_CLOSE_CODES.has(error.closeCode)) {
+					this.client.emit(Events.GatewayError, error);
 					return;
 				}
 
-				if (UNRESUMABLE_CLOSE_CODES.has(event.code) && this.webSocketClient) {
+				if (UNRESUMABLE_CLOSE_CODES.has(error.closeCode) && this.webSocketClient) {
 					// These event codes cannot be resumed
 					this.webSocketClient.sessionId = undefined;
 				}
 
-				this.client.emit(Events.GATEWAY_RECONNECTION);
+				this.client.emit(Events.GatewayReconnecting);
 
 				if (!this.webSocketClient?.sessionId) {
 					this.webSocketClient?.destroy({ reset: true, emit: false });
@@ -104,24 +102,24 @@ export class WebSocketManager extends EventEmitter {
 				this.reconnect();
 			});
 
-			this.webSocketClient.on(WebSocketEvents.INVALID_SESSION, () => {
-				this.client.emit(Events.GATEWAY_RECONNECTION);
+			this.webSocketClient!.on(WebSocketEvents.InvalidSession, () => {
+				this.client.emit(Events.GatewayReconnecting);
 			});
 
-			this.webSocketClient.on(WebSocketEvents.DESTROYED, () => {
-				this.client.emit(Events.GATEWAY_RECONNECTION);
+			this.webSocketClient!.on(WebSocketEvents.Destroyed, () => {
+				this.client.emit(Events.GatewayReconnecting);
 				this.reconnect();
 			});
 
-			this.webSocketClient.eventsAttached = true;
+			this.webSocketClient!.eventsAttached = true;
 		}
 
 		try {
-			await this.webSocketClient.connect();
+			await this.webSocketClient!.connect();
 		} catch (error) {
-			if (error?.code && UNRECOVERABLE_CLOSE_CODES.has(error.code)) {
-				throw new Exception(WEBSOCKET_CODES[error.code as keyof typeof WEBSOCKET_CODES]);
-			} else if (!error || typeof error.code === 'number') {
+			if (error && UNRECOVERABLE_CLOSE_CODES.has(error.closeCode)) {
+				throw new Exception(WEBSOCKET_CODES[error as keyof typeof WEBSOCKET_CODES]);
+			} else if (!error || error.closeCode) {
 				this.reconnect();
 			} else {
 				throw error;
@@ -130,7 +128,7 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	private async reconnect(): Promise<void> {
-		if (this.reconnecting || this.status !== Status.READY) {
+		if (this.reconnecting || this.status !== Status.Ready) {
 			return;
 		}
 
@@ -161,7 +159,7 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	public handlePacket(packet?: GatewayReceivePayload): void {
-		if (packet && this.status !== Status.READY && 't' in packet && !BeforeReadyWhitelist.has(packet.t)) {
+		if (packet && this.status !== Status.Ready && 't' in packet && !BeforeReadyWhitelist.has(packet.t)) {
 			this.packetQueue.push(packet);
 			return;
 		}
