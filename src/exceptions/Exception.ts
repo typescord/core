@@ -17,12 +17,9 @@ function description(key: MessagesKeys, ...args: unknown[]): string {
 }
 
 export class Exception extends Error {
-	public readonly code;
-	public readonly name;
-
-	public constructor(key: MessagesKeys, ...args: unknown[]) {
-		super(description(key, args));
-		this.code = key;
-		this.name = `${super.name} [${this.code}]`;
+	public constructor(public readonly code: MessagesKeys, ...args: unknown[]) {
+		super(description(code, args));
+		this.name = `Exception [${this.code}]`;
+		Error.captureStackTrace(this, Exception);
 	}
 }

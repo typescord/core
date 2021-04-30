@@ -84,7 +84,7 @@ describe(BaseClient.prototype.setTimeout, () => {
 });
 
 describe(BaseClient.prototype.setInterval, () => {
-	it('should fire n times with the right arguments', async () => {
+	it('should fire 3 times with the right arguments', async () => {
 		const client = new TestClient();
 		const handler = jest.fn();
 

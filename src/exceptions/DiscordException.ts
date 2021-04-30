@@ -1,5 +1,5 @@
 import { inspect } from 'util';
-import type { Response, NormalizedOptions } from 'got';
+import type { Response } from 'got';
 import type Request from 'got/dist/source/core';
 
 type DiscordAPIRawErrorEntry = { [P in string]: string | number | DiscordAPIRawErrorEntry | DiscordAPIRawErrorEntry[] };
@@ -18,7 +18,6 @@ export class DiscordException extends Error {
 		rawError: DiscordAPIRawError,
 		public readonly response: Response,
 		public readonly request: Request,
-		public readonly options: NormalizedOptions,
 	) {
 		super(rawError.message);
 		this.code = rawError.code;
@@ -30,5 +29,7 @@ export class DiscordException extends Error {
 				return inspect(errors, false, Infinity, true);
 			},
 		};
+		this.name = `DiscordException [${this.code}]`;
+		Error.captureStackTrace(this, DiscordException);
 	}
 }

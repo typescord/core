@@ -1,4 +1,4 @@
-/* eslint-disable unicorn/no-array-for-each, unicorn/no-array-callback-reference */
+/* eslint-disable @typescript-eslint/no-explicit-any, unicorn/no-array-for-each, unicorn/no-array-callback-reference */
 
 import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
@@ -12,7 +12,7 @@ const kTimeouts = Symbol('kTimeouts');
 const kIntervals = Symbol('kIntervals');
 
 export interface BaseClientOptions {
-	http: {
+	http?: {
 		/**
 		 * The timeout of http requests, in milliseconds.
 		 * @default 10000
@@ -65,21 +65,21 @@ export class BaseClient extends EventEmitter {
 	private readonly [kIntervals] = new Set<NodeJS.Timeout>();
 
 	public readonly options: DeepRequired<BaseClientOptions>;
-	public readonly rest: HttpManager;
+	public readonly http: HttpManager;
 	public destroyed = false;
 	public token?: string;
 
 	protected constructor(public readonly tokenType: TokenType, options?: BaseClientOptions) {
 		super();
 		this.options = options ? merge(defaultOptions, options) : defaultOptions;
-		this.rest = new HttpManager(this);
+		this.http = new HttpManager(this);
 	}
 
 	public get api(): Routes {
-		return this.rest.api;
+		return this.http.api;
 	}
 
-	public setImmediate<T extends unknown[]>(callback: (...args: T) => void, ...args: T): NodeJS.Immediate {
+	public setImmediate(callback: (...args: any[]) => void, ...args: any[]): NodeJS.Immediate {
 		const immediateId = setImmediate(() => {
 			this[kImmediates].delete(immediateId);
 			callback(...args);
@@ -94,7 +94,7 @@ export class BaseClient extends EventEmitter {
 		this[kImmediates].delete(immediateId);
 	}
 
-	public setTimeout<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
+	public setTimeout(callback: (...args: any[]) => void, ms?: number, ...args: any[]): NodeJS.Timeout {
 		const timeoutId = setTimeout(() => {
 			this[kTimeouts].delete(timeoutId);
 			callback(...args);
@@ -109,7 +109,7 @@ export class BaseClient extends EventEmitter {
 		this[kTimeouts].delete(timeoutId);
 	}
 
-	public setInterval<T extends unknown[]>(callback: (...args: T) => void, ms: number, ...args: T): NodeJS.Timeout {
+	public setInterval(callback: (...args: any[]) => void, ms?: number, ...args: any[]): NodeJS.Timeout {
 		const intervalId = setInterval(() => callback(...args), ms);
 
 		this[kIntervals].add(intervalId);
@@ -125,7 +125,9 @@ export class BaseClient extends EventEmitter {
 		if (this.destroyed) {
 			return;
 		}
+
 		this.destroyed = true;
+		this.token = undefined;
 
 		this[kIntervals].forEach(this.clearInterval, this);
 		this[kTimeouts].forEach(this.clearTimeout, this);
