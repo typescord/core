@@ -33,8 +33,8 @@ export const enum WebSocketEvents {
 	Resumed = 'resumed',
 }
 
-type GatewayURLQuery = {
-	v: number;
+type GatewayUrlQuery = {
+	v: 7 | 8;
 	encoding?: typeof encoding;
 	compress?: 'zlib-stream';
 };
@@ -79,6 +79,7 @@ export class WebSocketClient extends events.EventEmitter {
 	private closeSequence = 0;
 	private chunks?: Buffer[];
 	private inflate?: Inflate;
+	private readonly compress: boolean;
 
 	public readonly client: Client;
 	public ping = -1;
@@ -90,6 +91,7 @@ export class WebSocketClient extends events.EventEmitter {
 	public constructor(public readonly manager: WebSocketManager) {
 		super();
 		this.client = manager.client;
+		this.compress = this.client.options.ws.compress;
 		this.rateLimit = {
 			queue: [],
 			...this.client.options.ws.rateLimit,
@@ -106,20 +108,21 @@ export class WebSocketClient extends events.EventEmitter {
 			this.destroy();
 		}
 
-		const gatewayOptions: GatewayURLQuery = {
+		const gatewayOptions: GatewayUrlQuery = {
 			v: this.client.options.ws.version,
 			encoding,
 		};
 
-		if (this.client.options.ws.zlib) {
+		if (this.compress) {
 			this.chunks = [];
-			this.inflate = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 0xffff }).on('data', (chunk) =>
-				this.chunks!.push(chunk),
-			);
+			this.inflate = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 0xffff })
+				.on('data', (chunk) => this.chunks!.push(chunk))
+				.on('error', (error) => this.emit(Events.GatewayError, error));
 			gatewayOptions.compress = 'zlib-stream';
 		}
 
 		this.status = this.status === Status.Disconnected ? Status.Reconnecting : Status.Connecting;
+		// reset hello timeout
 		this.updateHelloTimeout(true);
 
 		this.connection = new WebSocket(`${this.manager.gatewayUrl}?${encode(gatewayOptions)}`, {
@@ -149,31 +152,25 @@ export class WebSocketClient extends events.EventEmitter {
 	private async onMessage(data: string | Buffer): Promise<void> {
 		let packet = data;
 
-		if (this.client.options.ws.zlib) {
-			if (!this.inflate) {
-				this.inflate = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 0xffff }).on('data', (chunk) =>
-					this.chunks!.push(chunk),
-				);
-			}
-
+		if (this.inflate && data instanceof Buffer) {
 			this.inflate.write(data);
-			if ((data as Buffer).readUInt32BE(data.length - 4) !== ZLIB_SUFFIX) {
+
+			if (data.readUInt32BE(data.length - 4) !== ZLIB_SUFFIX) {
 				return;
 			}
 
-			packet = await new Promise((resolve, reject) => {
-				this.inflate!.once('error', (error) => {
-					this.inflate = undefined;
-					reject(error);
-				}).flush(() => {
-					this.inflate!.removeListener('error', reject);
-					resolve(Buffer.concat(this.chunks!));
-				});
-			});
+			packet = await new Promise((resolve) => this.inflate!.flush(() => resolve(Buffer.concat(this.chunks!))));
 			this.chunks = [];
+
+			// If an error occurs during inflation, packet will be empty.
+			// Inflation errors are already handled.
+			if (packet.length === 0) {
+				return;
+			}
 		}
 
 		try {
+			// this assertion is false.
 			this.onPacket(unpack(packet as Buffer));
 		} catch (error) {
 			this.client.emit(Events.GatewayError, error);
@@ -364,7 +361,7 @@ export class WebSocketClient extends events.EventEmitter {
 					$browser: 'typescord',
 					$device: 'typescord',
 				},
-				compress: this.client.options.ws.zlib,
+				compress: this.compress,
 				large_threshold: this.client.options.ws.largeThreshold,
 				token: this.client.token,
 				intents: this.client.options.ws.intents,
