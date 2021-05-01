@@ -59,10 +59,12 @@ interface ClientOptions extends BaseClientOptions {
 		 */
 		version?: 7 | 8;
 		/**
-		 * Use of zlib compression/decompression.
+		 * If the Gateway should send zlib-compressed payloads.
+		 * In this case, the client will inflate theses payloads.
+		 * *The client will never send compressed payload.*
 		 * @default false
 		 */
-		zlib?: boolean;
+		compress?: boolean;
 		/**
 		 * Value between 50 and 250, total number of members where the gateway
 		 * will stop sending offline members in the guild member list.
@@ -114,7 +116,7 @@ const defaultOptions: DeepRequired<ClientOptions> = {
 	},
 	ws: {
 		version: 7,
-		zlib: false,
+		compress: false,
 		largeThreshold: 50,
 		intents: 513,
 		helloTimeout: 20_000,
