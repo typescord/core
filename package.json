@@ -5,7 +5,7 @@
 	"main": "build/index.js",
 	"prettier": "@typescord/prettier-config",
 	"scripts": {
-		"prepublishOnly": "yarn build",
+		"prepack": "yarn build",
 		"build": "rimraf build && tsc -p tsconfig.prod.json",
 		"lint": "eslint src --ext ts",
 		"lint-fix": "yarn lint --fix",
@@ -28,37 +28,37 @@
 	},
 	"dependencies": {
 		"@discordjs/collection": "^0.1.6",
-		"@typescord/form-data": "^3.0.3",
-		"discord-api-types": "^0.18.0",
+		"@typescord/famfor": "^0.1.2",
+		"discord-api-types": "^0.18.1",
 		"got": "^11.8.2",
-		"http2-wrapper": "^2.0.3",
+		"http2-wrapper": "^2.0.5",
 		"lodash.merge": "^4.6.2",
 		"ws": "^7.4.5"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.23",
 		"@types/lodash.merge": "^4.6.6",
-		"@types/node": "^15.0.0",
-		"@types/ws": "^7.4.1",
-		"@typescord/erlpack": "^0.7.0",
+		"@types/node": "^15.0.2",
+		"@types/ws": "^7.4.2",
+		"@typescord/erlpack": "^0.8.0",
 		"@typescord/eslint-config": "^0.2.1",
 		"@typescord/mrm-preset": "^2.1.2",
 		"@typescord/prettier-config": "^0.1.2",
-		"@typescript-eslint/eslint-plugin": "^4.22.0",
-		"@typescript-eslint/parser": "^4.22.0",
-		"eslint": "^7.25.0",
+		"@typescript-eslint/eslint-plugin": "^4.22.1",
+		"@typescript-eslint/parser": "^4.22.1",
+		"eslint": "^7.26.0",
 		"eslint-config-prettier": "^8.3.0",
 		"eslint-import-resolver-node": "^0.3.4",
 		"eslint-plugin-import": "^2.22.1",
 		"eslint-plugin-prettier": "^3.4.0",
 		"eslint-plugin-simple-import-sort": "^7.0.0",
 		"eslint-plugin-sonarjs": "^0.7.0",
-		"eslint-plugin-unicorn": "^31.0.0",
+		"eslint-plugin-unicorn": "^32.0.1",
 		"jest": "^26.6.3",
 		"mrm": "^3.0.1",
-		"prettier": "^2.2.1",
+		"prettier": "^2.3.0",
 		"rimraf": "^3.0.2",
-		"ts-jest": "^26.5.5",
+		"ts-jest": "^26.5.6",
 		"typescript": "~4.2.4"
 	},
 	"files": [
@@ -78,7 +78,7 @@
 		"node": "15.14.0"
 	},
 	"peerDependencies": {
-		"@typescord/erlpack": "^0.6.0"
+		"@typescord/erlpack": "^0.8.0"
 	},
 	"peerDependenciesMeta": {
 		"@typescord/erlpack": {

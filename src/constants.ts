@@ -2,4 +2,4 @@
 const { homepage, version } = require('../package') as Record<string, string>;
 
 export { version };
-export const USER_AGENT = `DiscordBot (${homepage.split('#')[0]}, ${version})`;
+export const UserAgent = `DiscordBot (${homepage.split('#')[0]}, ${version})`;
