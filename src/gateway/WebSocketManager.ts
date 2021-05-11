@@ -3,6 +3,7 @@ import { GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/
 import { Snowflake } from 'discord-api-types';
 import { Client } from '../clients';
 import { Exception, GatewayException } from '../exceptions';
+import { gatewayBot } from '../http/routes';
 import { Events } from './Events';
 import { WebSocketClient, WebSocketEvents } from './WebSocketClient';
 
@@ -55,11 +56,11 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	public async connect(): Promise<void> {
-		const { url: gatewayUrl } = await this.client.api.gateway.bot.get().catch((error) => {
+		const gateway = await this.client.$request('get', gatewayBot).catch((error) => {
 			throw error.httpStatus === 401 ? new Exception('TOKEN_INVALID') : error;
 		});
 
-		this.gatewayUrl = gatewayUrl;
+		this.gatewayUrl = gateway.url;
 
 		this.webSocketClient = new WebSocketClient(this);
 		return this.createClient();

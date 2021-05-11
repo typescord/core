@@ -3,9 +3,10 @@ import type { GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { Snowflake } from 'discord-api-types';
 import merge from 'lodash.merge';
 import { Events, WebSocketManager } from '../gateway';
-import type { DeepRequired } from '../utils/types';
+import type { HttpOptions } from '../http';
+import type { DeepRequired } from '../utils';
 import { GatewayException } from '../exceptions';
-import { BaseClient, BaseClientOptions } from './BaseClient';
+import { BaseClient } from './BaseClient';
 
 interface ClientEvents extends Record<Events, readonly unknown[]> {
 	raw: [GatewayReceivePayload];
@@ -51,7 +52,14 @@ export interface Client extends EventEmitter {
 	listenerCount(eventName: string | symbol): number;
 }
 
-interface ClientOptions extends BaseClientOptions {
+interface ClientOptions {
+	/**
+	 * Http options
+	 */
+	http?: HttpOptions;
+	/**
+	 * WebSocket options
+	 */
 	ws?: {
 		/**
 		 * Discord's gateway version.
@@ -105,36 +113,31 @@ interface ClientOptions extends BaseClientOptions {
 	};
 }
 
-const defaultOptions: DeepRequired<ClientOptions> = {
-	http: {
-		requestTimeout: 10000,
-		sweepInterval: 60000,
-		retryLimit: 2,
-		timeOffset: 0,
-		http2: true,
-		api: 'https://discord.com/api/v8',
-	},
+const defaultOptions: DeepRequired<Omit<ClientOptions, 'http'>> = {
 	ws: {
-		version: 7,
+		version: 8,
 		compress: false,
 		largeThreshold: 50,
 		intents: 513,
 		helloTimeout: 20_000,
 		rateLimit: {
 			limit: 120,
-			time: 6_000,
+			time: 6000,
 		},
 	},
 };
 
 // eslint-disable-next-line no-redeclare
 export class Client extends BaseClient {
-	public readonly options!: DeepRequired<ClientOptions>;
+	public readonly options: DeepRequired<Omit<ClientOptions, 'http'>>;
 	public webSocket = new WebSocketManager(this);
 
-	public constructor(options?: ClientOptions) {
-		super('Bot', options ? merge(defaultOptions, options) : defaultOptions);
+	public constructor({ http, ...options }: ClientOptions = defaultOptions) {
+		super('Bot', http);
+		this.options = merge(defaultOptions, options);
 	}
+
+	public $request = this.http.request.bind(this.http);
 
 	public get ping(): number | undefined {
 		return this.webSocket.ping;

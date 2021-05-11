@@ -2,8 +2,8 @@
 
 import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
-import { DeepRequired } from '../utils/types';
-import { HttpManager, Routes } from '../http';
+import { HttpManager, HttpOptions } from '../http';
+import { DeepPartial } from '../utils';
 
 export type TokenType = 'Bot' | 'Bearer';
 
@@ -11,52 +11,13 @@ const kImmediates = Symbol('kImmediates');
 const kTimeouts = Symbol('kTimeouts');
 const kIntervals = Symbol('kIntervals');
 
-export interface BaseClientOptions {
-	http?: {
-		/**
-		 * The timeout of http requests, in milliseconds.
-		 * @default 10000
-		 */
-		requestTimeout?: number;
-		/**
-		 * How frequently to delete inactive request buckets, in milliseconds (or Infinity for never).
-		 * @default 60000
-		 */
-		sweepInterval?: number;
-		/**
-		 * The number of times to retry a failed http request.
-		 * @default 2
-		 */
-		retryLimit?: number;
-		/**
-		 * Time in milliseconds to add for requets (rate limit handling).
-		 * A higher value will reduce rate limit errors.
-		 * @default 0
-		 */
-		timeOffset?: number;
-		/**
-		 * If HTTP/2 should be used instead of HTTP/1.1.
-		 * It will choose either HTTP/1.1 or HTTP/2 depending on the ALPN protocol.
-		 * @default false
-		 */
-		http2?: boolean;
-		/**
-		 * The Discord API url.
-		 * @default 'https://discord.com/api/v8'
-		 */
-		api?: string;
-	};
-}
-
-const defaultOptions: DeepRequired<BaseClientOptions> = {
-	http: {
-		requestTimeout: 10000,
-		sweepInterval: 60000,
-		retryLimit: 2,
-		timeOffset: 0,
-		http2: false,
-		api: 'https://discord.com/api/v8',
-	},
+const defaultOptions: HttpOptions = {
+	requestTimeout: 10_000,
+	sweepInterval: 60_000,
+	retryLimit: 2,
+	timeOffset: 0,
+	http2: false,
+	api: 'https://discord.com/api/v8',
 };
 
 export class BaseClient extends EventEmitter {
@@ -64,19 +25,13 @@ export class BaseClient extends EventEmitter {
 	private readonly [kTimeouts] = new Set<NodeJS.Timeout>();
 	private readonly [kIntervals] = new Set<NodeJS.Timeout>();
 
-	public readonly options: DeepRequired<BaseClientOptions>;
 	public readonly http: HttpManager;
 	public destroyed = false;
 	public token?: string;
 
-	protected constructor(public readonly tokenType: TokenType, options?: BaseClientOptions) {
+	protected constructor(public readonly tokenType: TokenType, httpOptions?: DeepPartial<HttpOptions>) {
 		super();
-		this.options = options ? merge(defaultOptions, options) : defaultOptions;
-		this.http = new HttpManager(this);
-	}
-
-	public get api(): Routes {
-		return this.http.api;
+		this.http = new HttpManager(this, httpOptions ? merge(defaultOptions, httpOptions) : defaultOptions);
 	}
 
 	public setImmediate(callback: (...args: any[]) => void, ...args: any[]): NodeJS.Immediate {

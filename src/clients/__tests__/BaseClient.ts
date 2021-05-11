@@ -8,7 +8,7 @@ const setImmediate = promisify(_setImmediate);
 // only for test
 class TestClient extends BaseClient {
 	public constructor() {
-		super('Bot', { http: { sweepInterval: 0 } });
+		super('Bot', { sweepInterval: 0 });
 	}
 }
 
@@ -123,8 +123,8 @@ describe(BaseClient.prototype.destroy, () => {
 	it('should clear all timers', () => {
 		const client = new TestClient();
 		client.setImmediate(noop);
-		client.setTimeout(noop, 10000);
-		client.setInterval(noop, 10000);
+		client.setTimeout(noop, 10_000);
+		client.setInterval(noop, 10_000);
 
 		client.destroy();
 

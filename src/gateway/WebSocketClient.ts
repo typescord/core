@@ -21,7 +21,7 @@ try {
 	// eslint-disable-next-line no-empty
 } catch {}
 
-const ZLIB_SUFFIX = 0xffff;
+const ZLIB_SUFFIX = 0xff_ff;
 
 const encoding = erlpack ? 'etf' : 'json';
 
@@ -115,7 +115,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 		if (this.compress) {
 			this.chunks = [];
-			this.inflate = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 0xffff })
+			this.inflate = createInflate({ flush: constants.Z_SYNC_FLUSH, chunkSize: 0xff_ff })
 				.on('data', (chunk) => this.chunks!.push(chunk))
 				.on('error', (error) => this.emit(Events.GatewayError, error));
 			gatewayOptions.compress = 'zlib-stream';
@@ -293,7 +293,7 @@ export class WebSocketClient extends events.EventEmitter {
 			this.readyTimeout = undefined;
 			this.status = Status.Ready;
 			this.emit(WebSocketEvents.Ready, this.expectedGuilds);
-		}, 15000);
+		}, 15_000);
 	}
 
 	private updateHelloTimeout(reset = true) {
