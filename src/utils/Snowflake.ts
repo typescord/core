@@ -2,12 +2,13 @@ export const DISCORD_EPOCH = 1_420_070_400_000n;
 
 export const SnowflakeRegex = /^\d{17,20}$/;
 
-interface Snowflake {
-	timestamp: bigint;
+export interface Snowflake<T extends number | bigint = number> {
+	timestamp: T;
 	date: Date;
-	workerId: bigint;
-	processId: bigint;
-	increment: bigint;
+	workerId: T;
+	processId: T;
+	increment: T;
+	$raw: Omit<Snowflake<bigint>, 'date' | '$raw'>;
 }
 
 /**
@@ -20,12 +21,18 @@ export function deconstruct(input: string): Snowflake | undefined {
 	try {
 		const snowflake = BigInt(input);
 		const timestamp = (snowflake >> 22n) + DISCORD_EPOCH;
+		const timestampNumber = Number(timestamp);
+		const workerId = (snowflake & 0x3e_00_00n) >> 17n;
+		const processId = (snowflake & 0x1_f0_00n) >> 12n;
+		const increment = snowflake & 0xf_ffn;
+
 		return {
-			timestamp,
-			date: new Date(Number(timestamp)),
-			workerId: (snowflake & 0x3e_00_00n) >> 17n,
-			processId: (snowflake & 0x1_f0_00n) >> 12n,
-			increment: snowflake & 0xf_ffn,
+			timestamp: timestampNumber,
+			date: new Date(timestampNumber),
+			workerId: Number(workerId),
+			processId: Number(processId),
+			increment: Number(increment),
+			$raw: { timestamp, workerId, processId, increment },
 		};
 		// eslint-disable-next-line no-empty
 	} catch {}

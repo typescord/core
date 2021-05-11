@@ -178,7 +178,7 @@ export class HttpManager {
 
 			if (dotOptions.method === 'delete' && route.bucketRoute[2] === '/messages/') {
 				const id = Snowflake.deconstruct(route.bucketRoute[3])!;
-				if (Date.now() - Number(id.timestamp) > 1000 * 60 * 60 * 24 * 14) {
+				if (Date.now() - id.timestamp > 1000 * 60 * 60 * 24 * 14) {
 					finalRoute += '/:old-message';
 				}
 			}
