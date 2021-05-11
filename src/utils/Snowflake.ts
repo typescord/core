@@ -21,13 +21,14 @@ export function deconstruct(input: string): Snowflake | undefined {
 	try {
 			const snowflake = BigInt(input);
 			const timestamp = (snowflake >> 22n) + DISCORD_EPOCH;
+			const timestampNumber = Number(timestamp)
 			const workerId = (snowflake & 0x3e_00_00n) >> 17n;
 			const processId = (snowflake & 0x1_f0_00n) >> 12n;
 			const increment = snowflake & 0xf_ffn;
 
 			return {
-					timestamp: Number(timestamp),
-					date: new Date(Number(timestamp)),
+					timestamp: timestampNumber,
+					date: new Date(timestampNumber),
 					workerId: Number(workerId),
 					processId: Number(processId),
 					increment: Number(increment),
