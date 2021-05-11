@@ -42,8 +42,8 @@ export class Message {
 	public guildId?: Snowflake;
 	public author!: User;
 	public content!: string;
-	public createdTimestamp!: string;
-	public editedTimestamp?: string;
+	public createdTimestamp!: number;
+	public editedTimestamp?: number;
 	public tts!: boolean;
 	/* public mentionEveryone!: boolean;
 	public mentions!: (User & {
@@ -74,7 +74,7 @@ export class Message {
 
 	public $patch(data: APIMessage): void {
 		if (data.edited_timestamp) {
-			this.editedTimestamp = data.edited_timestamp;
+			this.editedTimestamp = Number(data.edited_timestamp);
 		}
 
 		if (data.referenced_message) {
@@ -112,7 +112,7 @@ export class Message {
 		this.guildId = data.guild_id;
 		this.author = new User(this.client, data.author);
 		this.content = data.content;
-		this.createdTimestamp = data.timestamp;
+		this.createdTimestamp = Number(data.timestamp);
 		this.tts = data.tts;
 		/*this.mentionEveryone = data.mention_everyone;
 		this.mentions = data.mentions;

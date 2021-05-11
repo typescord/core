@@ -1,5 +1,6 @@
 import { APIApplication, ApplicationFlags, Snowflake } from 'discord-api-types';
 import { Client } from '../clients';
+import { deconstruct } from '../utils/Snowflake';
 import { Team } from './team/Team';
 import { User } from './User';
 
@@ -55,6 +56,14 @@ export class Application {
 		this.slug = data.slug;
 		this.coverImage = data.cover_image;
 		this.flags = data.flags;
+	}
+
+	public get createdTimestamp(): number | undefined {
+		return this.id ? deconstruct(this.id)?.timestamp : undefined;
+	}
+
+	public get createdAt(): Date | undefined {
+		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 
 	public toString(): string | undefined {

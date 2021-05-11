@@ -1,5 +1,6 @@
 import Collection from '@discordjs/collection';
 import { APIRole, Permissions, Snowflake } from 'discord-api-types';
+import { deconstruct } from '../utils/Snowflake';
 import { Guild } from './guild/Guild';
 import { GuildMember } from './guild/GuildMember';
 
@@ -39,6 +40,14 @@ export class Role {
 		this.permissions = data.permissions;
 		this.managed = data.managed;
 		this.mentionable = data.mentionable;
+	}
+
+	public get createdTimestamp(): number | undefined {
+		return deconstruct(this.id)?.timestamp;
+	}
+
+	public get createdAt(): Date | undefined {
+		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 
 	public get hexColor(): string {

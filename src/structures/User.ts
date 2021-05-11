@@ -1,5 +1,6 @@
 import { APIUser, Snowflake, UserFlags, UserPremiumType } from 'discord-api-types';
 import { Client } from '../clients';
+import { deconstruct } from '../utils/Snowflake';
 
 export class User {
 	public id!: Snowflake;
@@ -40,6 +41,14 @@ export class User {
 		this.mfaEnabled = !!data.mfa_enabled;
 		this.verified = !!data.verified;
 		this.premiumType = data.premium_type;
+	}
+
+	public get createdTimestamp(): number | undefined {
+		return deconstruct(this.id)?.timestamp;
+	}
+
+	public get createdAt(): Date | undefined {
+		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 
 	public get tag(): string {

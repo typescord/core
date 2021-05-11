@@ -14,6 +14,7 @@ import {
 	Snowflake,
 } from 'discord-api-types';
 import { Client } from '../../clients';
+import { deconstruct } from '../../utils/Snowflake';
 import { GuildChannel } from '../channel/GuildChannel';
 import { GuildEmoji } from '../emoji/GuildEmoji';
 import { GuildMember } from '../guild/GuildMember';
@@ -206,6 +207,14 @@ export class Guild {
 			this.approximatePresenceCount = data.approximate_presence_count;
 			this.nsfw = data.nsfw;
 		}
+	}
+
+	public get createdTimestamp(): number | undefined {
+		return deconstruct(this.id)?.timestamp;
+	}
+
+	public get createdAt(): Date | undefined {
+		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 
 	public toString(): string {

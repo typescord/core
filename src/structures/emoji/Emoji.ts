@@ -1,5 +1,6 @@
 import { APIPartialEmoji, Snowflake } from 'discord-api-types';
 import { Client } from '../../clients';
+import { deconstruct } from '../../utils/Snowflake';
 
 export class Emoji {
 	public id?: Snowflake;
@@ -20,6 +21,14 @@ export class Emoji {
 		}
 
 		this.animated = !!data.animated;
+	}
+
+	public get createdTimestamp(): number | undefined {
+		return this.id ? deconstruct(this.id)?.timestamp : undefined;
+	}
+
+	public get createdAt(): Date | undefined {
+		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 
 	public get identifier(): string | undefined {
