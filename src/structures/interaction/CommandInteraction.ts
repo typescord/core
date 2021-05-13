@@ -30,8 +30,8 @@ export class CommandInteraction extends Interaction {
 		super.$patch(data);
 
 		if (data.data.resolved?.users) {
-			for (const [id, user] of Object.entries(data.data.resolved.users)) {
-				this.users.set(id as Snowflake, new User(this.client, user));
+			for (const id in data.data.resolved.users) {
+				this.users.set(id as Snowflake, new User(this.client, data.data.resolved.users[id]));
 			}
 		}
 
