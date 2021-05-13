@@ -8,8 +8,6 @@ export class GuildEmoji extends BaseGuildEmoji {
 	public $patch(data: APIEmoji): void {
 		super.$patch(data);
 
-		if (data.user) {
-			this.author = new User(this.client, data.user);
-		}
+		this.author = data.user && new User(this.client, data.user);
 	}
 }

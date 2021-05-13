@@ -20,20 +20,11 @@ export class GuildPreview {
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	public $patch(data: APIGuildPreview): void {
-		if (data.icon) {
-			this.icon = data.icon;
-		}
-
-		if (data.splash) {
-			this.splash = data.splash;
-		}
-
-		if (data.discovery_splash) {
-			this.discoverySplash = data.discovery_splash;
-		}
-
 		this.id = data.id;
 		this.name = data.name;
+		this.icon = data.icon ?? undefined;
+		this.splash = data.splash ?? undefined;
+		this.discoverySplash = data.discovery_splash ?? undefined;
 		this.emojis = data.emojis.map((emoji) => new GuildPreviewEmoji(this, emoji));
 		this.features = data.features;
 		this.approximateMemberCount = data.approximate_member_count;

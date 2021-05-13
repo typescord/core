@@ -37,6 +37,7 @@ export class Activity {
 	public type!: ActivityType;
 	public url?: string;
 	public createdAt!: Date;
+	public createdTimestamp!: number;
 	public timestamps?: ActivityTimestamps;
 	public syncId?: string;
 	public platform?: ActivityPlatform;
@@ -57,44 +58,26 @@ export class Activity {
 	}
 
 	public $patch(data: GatewayActivity): void {
-		if (data.url) {
-			this.url = data.url;
-		}
-
-		if (data.details) {
-			this.details = data.details;
-		}
-
-		if (data.state) {
-			this.state = data.state;
-		}
-
-		if (data.emoji) {
-			this.emoji = new Emoji(this.presence.client, data.emoji as APIPartialEmoji);
-		}
-
-		if (data.assets) {
-			this.assets = new ActivityAssets(this, data.assets);
-		}
-
 		this.id = data.id;
 		this.name = data.name;
 		this.type = data.type;
+		this.url = data.url ?? undefined;
 		this.createdAt = new Date(data.created_at);
+		this.createdTimestamp = this.createdAt.getTime();
 		this.timestamps = data.timestamps;
 		this.syncId = data.sync_id;
 		this.platform = data.platform;
 		this.applicationId = data.application_id;
+		this.details = data.details ?? undefined;
+		this.state = data.state ?? undefined;
+		this.emoji = data.emoji && new Emoji(this.presence.client, data.emoji as APIPartialEmoji);
 		this.sessionId = data.session_id;
 		this.party = data.party;
+		this.assets = data.assets && new ActivityAssets(this, data.assets);
 		this.secrets = data.secrets;
 		this.instance = data.instance;
 		this.flags = data.flags;
 		this.buttons = data.buttons;
-	}
-
-	public get createdTimestamp(): number {
-		return this.createdAt.getTime();
 	}
 
 	public toString(): string {

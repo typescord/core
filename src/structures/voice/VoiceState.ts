@@ -13,37 +13,32 @@ export class VoiceState {
 	public serverMute!: boolean;
 	public selfDeaf!: boolean;
 	public selfMute!: boolean;
-	public selfStream!: boolean;
+	public selfStream?: boolean;
 	public selfVideo!: boolean;
 	public suppress!: boolean;
-	public requestToSpeakTimestamp?: string;
+	public requestToSpeakTimestamp?: number;
+	public requestToSpeakAt?: Date;
 
 	public constructor(public readonly guild: Guild, data: GatewayVoiceState) {
 		this.$patch(data);
 	}
 
 	public $patch(data: GatewayVoiceState): void {
-		if (data.channel_id) {
-			this.channelId = data.channel_id;
-		}
-
-		if (data.member) {
-			this.member = new GuildMember(this.guild, data.member);
-		}
-
-		if (data.request_to_speak_timestamp) {
-			this.requestToSpeakTimestamp = data.request_to_speak_timestamp;
-		}
-
+		this.channelId = data.channel_id ?? undefined;
 		this.userId = data.user_id;
+		this.member = data.member && new GuildMember(this.guild, data.member);
 		this.sessionId = data.session_id;
 		this.serverDeaf = data.deaf;
 		this.serverMute = data.mute;
 		this.selfDeaf = data.self_deaf;
 		this.selfMute = data.self_mute;
-		this.selfStream = !!data.self_stream;
+		this.selfStream = data.self_stream;
 		this.selfVideo = data.self_video;
 		this.suppress = data.suppress;
+		this.requestToSpeakTimestamp = data.request_to_speak_timestamp
+			? Number(data.request_to_speak_timestamp)
+			: undefined;
+		this.requestToSpeakAt = this.requestToSpeakTimestamp ? new Date(this.requestToSpeakTimestamp) : undefined;
 	}
 
 	public get channel(): VoiceChannel | StageChannel | undefined {

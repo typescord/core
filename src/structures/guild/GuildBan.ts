@@ -11,10 +11,7 @@ export class GuildBan {
 	}
 
 	public $patch(data: APIBan): void {
-		if (data.reason) {
-			this.reason = data.reason;
-		}
-
+		this.reason = data.reason ?? undefined;
 		this.user = new User(this.guild.client, data.user);
 	}
 }

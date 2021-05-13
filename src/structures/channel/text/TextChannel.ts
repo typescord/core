@@ -9,10 +9,7 @@ export class TextChannel extends TextBasedChannel(GuildChannel) {
 	public $patch(data: APIChannel): void {
 		super.$patch(data);
 
-		if (data.topic) {
-			this.topic = data.topic;
-		}
-
+		this.topic = data.topic ?? undefined;
 		this.rateLimitPerUser = data.rate_limit_per_user;
 	}
 }

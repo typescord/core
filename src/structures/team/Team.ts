@@ -9,29 +9,22 @@ export class Team {
 	public id!: Snowflake;
 	public members = new Collection<Snowflake, TeamMember>();
 	public ownerUserId!: Snowflake;
+	public createdTimestamp?: number;
+	public createdAt?: Date;
 
 	public constructor(public readonly client: Client, data: APITeam) {
 		this.$patch(data);
 	}
 
 	public $patch(data: APITeam): void {
-		if (data.icon) {
-			this.icon = data.icon;
+		for (const member of data.members) {
+			this.members.set(member.user.id, new TeamMember(this, member));
 		}
 
-		for (const member of data.members.map((teamMember) => new TeamMember(this, teamMember))) {
-			this.members.set(member.id, member);
-		}
-
+		this.icon = data.icon ?? undefined;
 		this.id = data.id;
 		this.ownerUserId = data.owner_user_id;
-	}
-
-	public get createdTimestamp(): number | undefined {
-		return deconstruct(this.id)?.timestamp;
-	}
-
-	public get createdAt(): Date | undefined {
-		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)?.timestamp;
+		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 }

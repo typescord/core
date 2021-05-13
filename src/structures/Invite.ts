@@ -8,7 +8,7 @@ import { User } from './User';
 export class Invite {
 	public code!: string;
 	public guild?: Guild;
-	public channel!: GuildChannel;
+	public channel?: GuildChannel;
 	public inviter?: User;
 	public targetType?: InviteTargetType;
 	public targetUser?: User;
@@ -20,31 +20,22 @@ export class Invite {
 	public maxAge!: number;
 	public temporary!: boolean;
 	public createdAt!: Date;
+	public createdTimestamp!: number;
+	public expiresTimestamp?: number;
+	public expiresAt?: Date;
 
 	public constructor(public readonly client: Client, data: APIExtendedInvite) {
 		this.$patch(data);
 	}
 
 	public $patch(data: APIExtendedInvite): void {
-		if (data.guild) {
-			this.guild = new Guild(this.client, data.guild);
-			this.channel = new GuildChannel(this.guild, data.channel);
-		}
-
-		if (data.inviter) {
-			this.inviter = new User(this.client, data.inviter);
-		}
-
-		if (data.target_user) {
-			this.targetUser = new User(this.client, data.target_user);
-		}
-
-		if (data.target_application) {
-			this.targetApplication = new Application(this.client, data.target_application);
-		}
-
 		this.code = data.code;
+		this.guild = data.guild && new Guild(this.client, data.guild);
+		this.channel = this.guild && new GuildChannel(this.guild, data.channel);
+		this.inviter = data.inviter && new User(this.client, data.inviter);
 		this.targetType = data.target_type;
+		this.targetUser = data.target_user && new User(this.client, data.target_user);
+		this.targetApplication = data.target_application && new Application(this.client, data.target_application);
 		this.approximatePresenceCount = data.approximate_presence_count;
 		this.approximateMemberCount = data.approximate_member_count;
 		this.uses = data.uses;
@@ -52,17 +43,8 @@ export class Invite {
 		this.maxAge = data.max_age;
 		this.temporary = data.temporary;
 		this.createdAt = new Date(data.created_at);
-	}
-
-	public get createdTimestamp(): number {
-		return this.createdAt.getTime();
-	}
-
-	public get expiresTimestamp(): number | undefined {
-		return this.temporary ? this.createdTimestamp + this.maxAge * 1000 : undefined;
-	}
-
-	public get expiresAt(): Date | undefined {
-		return this.expiresTimestamp ? new Date(this.expiresTimestamp) : undefined;
+		this.createdTimestamp = this.createdAt.getTime();
+		this.expiresTimestamp = this.temporary ? this.createdTimestamp + this.maxAge * 1000 : undefined;
+		this.expiresAt = this.expiresTimestamp ? new Date(this.expiresTimestamp) : undefined;
 	}
 }

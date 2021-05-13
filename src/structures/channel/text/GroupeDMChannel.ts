@@ -9,10 +9,7 @@ export class GroupeDMChannel extends DMChannel {
 	public $patch(data: APIChannel): void {
 		super.$patch(data);
 
-		if (data.icon) {
-			this.icon = data.icon;
-		}
-
+		this.icon = data.icon ?? undefined;
 		this.ownerId = data.owner_id;
 		this.applicationId = data.application_id;
 	}

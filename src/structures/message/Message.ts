@@ -43,7 +43,9 @@ export class Message {
 	public author!: User;
 	public content!: string;
 	public createdTimestamp!: number;
+	public createdAt!: Date;
 	public editedTimestamp?: number;
+	public editedAt?: Date;
 	public tts!: boolean;
 	/* public mentionEveryone!: boolean;
 	public mentions!: (User & {
@@ -73,46 +75,15 @@ export class Message {
 	}
 
 	public $patch(data: APIMessage): void {
-		if (data.edited_timestamp) {
-			this.editedTimestamp = Number(data.edited_timestamp);
-		}
-
-		if (data.referenced_message) {
-			this.referencedMessage = new Message(this.channel, data.referenced_message);
-		}
-
-		if (data.application) {
-			this.application = new Application(this.client, data.application);
-		}
-
-		if (data.message_reference) {
-			this.messageReference = {
-				messageId: data.message_reference.message_id,
-				channelId: data.message_reference.channel_id,
-				guildId: data.message_reference.guild_id,
-			};
-		}
-
-		if (data.activity) {
-			this.activity = {
-				type: data.activity.type,
-				partyId: data.activity.party_id,
-			};
-		}
-
-		if (data.interaction) {
-			this.interaction = {
-				...data.interaction,
-				user: new User(this.client, data.interaction.user),
-			};
-		}
-
 		this.id = data.id;
 		this.channelId = data.channel_id;
 		this.guildId = data.guild_id;
 		this.author = new User(this.client, data.author);
 		this.content = data.content;
 		this.createdTimestamp = Number(data.timestamp);
+		this.createdAt = new Date(this.createdTimestamp);
+		this.editedTimestamp = Number(data.edited_timestamp);
+		this.editedAt = this.editedTimestamp ? new Date(this.editedTimestamp) : undefined;
 		this.tts = data.tts;
 		/*this.mentionEveryone = data.mention_everyone;
 		this.mentions = data.mentions;
@@ -125,8 +96,23 @@ export class Message {
 		this.pinned = data.pinned;
 		this.webhookId = data.webhook_id;
 		this.type = data.type;
+		this.activity = data.activity && {
+			type: data.activity.type,
+			partyId: data.activity.party_id,
+		};
+		this.application = data.application && new Application(this.client, data.application);
+		this.messageReference = data.message_reference && {
+			messageId: data.message_reference.message_id,
+			channelId: data.message_reference.channel_id,
+			guildId: data.message_reference.guild_id,
+		};
 		this.flags = data.flags;
 		this.stickers = data.stickers?.map((sticker) => new Sticker(this.client, sticker));
+		this.referencedMessage = data.referenced_message ? new Message(this.channel, data.referenced_message) : undefined;
+		this.interaction = data.interaction && {
+			...data.interaction,
+			user: new User(this.client, data.interaction.user),
+		};
 	}
 
 	public get guild(): Guild | undefined {
@@ -139,14 +125,6 @@ export class Message {
 
 	public get url(): string {
 		return `https://discord.com/channels/${this.guild ? this.guild.id : '@me'}/${this.channel.id}/${this.id}`;
-	}
-
-	public get createdAt(): Date {
-		return new Date(this.createdTimestamp);
-	}
-
-	public get editedAt(): Date | undefined {
-		return this.editedTimestamp ? new Date(this.editedTimestamp) : undefined;
 	}
 
 	public toString(): string {

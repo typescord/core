@@ -7,8 +7,6 @@ export class StageChannel extends VoiceBasedChannel {
 	public $patch(data: APIChannel): void {
 		super.$patch(data);
 
-		if (data.topic) {
-			this.topic = data.topic;
-		}
+		this.topic = data.topic ?? undefined;
 	}
 }

@@ -20,13 +20,10 @@ export class Presence {
 	}
 
 	public $patch(data: GatewayPresenceUpdate): void {
-		if (data.activities) {
-			this.activities = data.activities.map((activity) => new Activity(this, activity));
-		}
-
 		this.userId = data.user.id;
 		this.guildid = data.guild_id;
 		this.status = data.status;
+		this.activities = data.activities?.map((activity) => new Activity(this, activity));
 		this.clientStatus = data.client_status;
 	}
 }

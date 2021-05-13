@@ -27,36 +27,26 @@ export class AuditLogEntry {
 	public actionType!: AuditLogEvent;
 	public options?: AuditLogOptions;
 	public reason?: string;
+	public createdTimestamp?: number;
+	public createdAt?: Date;
 
 	public constructor(public readonly logs: AuditLog, data: APIAuditLogEntry) {
 		this.$patch(data);
 	}
 
 	public $patch(data: APIAuditLogEntry): void {
-		if (data.target_id) {
-			this.targetId = data.target_id;
-		}
-
-		if (data.user_id) {
-			this.userId = data.user_id;
-		}
-
 		this.id = data.id;
+		this.targetId = data.target_id ?? undefined;
 		this.changes = data.changes?.map((change) => ({
 			key: change.key,
 			newValue: change.new_value,
 			oldValue: change.old_value,
 		}));
+		this.userId = data.user_id ?? undefined;
 		this.actionType = data.action_type;
 		this.options = data.options;
 		this.reason = data.reason;
-	}
-
-	public get createdTimestamp(): number | undefined {
-		return deconstruct(this.id)?.timestamp;
-	}
-
-	public get createdAt(): Date | undefined {
-		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)?.timestamp;
+		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 }
