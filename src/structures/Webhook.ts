@@ -18,49 +18,28 @@ export class Webhook {
 	public sourceGuild?: Guild;
 	public sourceChannel?: TextChannel;
 	public url?: string;
+	public createdTimestamp?: number;
+	public createdAt?: Date;
 
 	public constructor(public readonly client: Client, data: APIWebhook) {
 		this.$patch(data);
 	}
 
 	public $patch(data: APIWebhook): void {
-		if (data.user) {
-			this.user = new User(this.client, data.user);
-		}
-
-		if (data.name) {
-			this.name = data.name;
-		}
-
-		if (data.avatar) {
-			this.avatar = data.avatar;
-		}
-
-		if (data.application_id) {
-			this.applicationId = data.application_id;
-		}
-
-		if (data.source_guild) {
-			this.sourceGuild = new Guild(this.client, data.source_guild);
-
-			if (data.source_channel) {
-				this.sourceChannel = new TextChannel(this.sourceGuild, data.source_channel);
-			}
-		}
-
 		this.id = data.id;
 		this.type = data.type;
 		this.guildId = data.guild_id;
 		this.channelId = data.channel_id;
+		this.user = data.user && new User(this.client, data.user);
+		this.name = data.name ?? undefined;
+		this.avatar = data.avatar ?? undefined;
 		this.token = data.token;
+		this.applicationId = data.application_id ?? undefined;
+		this.sourceGuild = data.source_guild && new Guild(this.client, data.source_guild);
+		this.sourceChannel =
+			this.sourceGuild && data.source_channel && new TextChannel(this.sourceGuild, data.source_channel);
 		this.url = data.url;
-	}
-
-	public get createdTimestamp(): number | undefined {
-		return deconstruct(this.id)?.timestamp;
-	}
-
-	public get createdAt(): Date | undefined {
-		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)?.timestamp;
+		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 }

@@ -11,21 +11,18 @@ export function TextBasedChannel<T extends Constructor<Channel>>(BaseClass: T) {
 		public messages = new Collection<Snowflake, Message>();
 		public lastMessageId?: Snowflake;
 		public lastPinTimestamp?: number;
+		public lastPinAt?: Date;
 
 		public $patch(data: APIChannel): void {
 			super.$patch(data);
 
-			if (data.last_message_id) {
-				this.lastMessageId = data.last_message_id;
-			}
+			this.lastMessageId = data.last_message_id ?? undefined;
+			this.lastPinTimestamp = data.last_pin_timestamp ? Number(data.last_pin_timestamp) : undefined;
+			this.lastPinAt = this.lastPinTimestamp ? new Date(this.lastPinTimestamp) : undefined;
 		}
 
 		public get lastMessage(): Message | undefined {
 			return this.lastMessageId ? this.messages.get(this.lastMessageId) : undefined;
-		}
-
-		public get lastPinAt() {
-			return this.lastPinTimestamp ? new Date(this.lastPinTimestamp) : undefined;
 		}
 	};
 }

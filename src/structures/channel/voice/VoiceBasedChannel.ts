@@ -10,12 +10,9 @@ export class VoiceBasedChannel extends GuildChannel {
 	public $patch(data: APIChannel): void {
 		super.$patch(data);
 
-		if (data.rtc_region) {
-			this.rtcRegion = data.rtc_region;
-		}
-
 		this.bitrate = data.bitrate;
 		this.userLimit = data.user_limit;
+		this.rtcRegion = data.rtc_region ?? undefined;
 		this.videoQualityMode = data.video_quality_mode;
 	}
 }

@@ -66,30 +66,33 @@ export class Template {
 	public creatorId!: Snowflake;
 	public creator!: User;
 	public createdAt!: Date;
+	public createdTimestamp!: number;
 	public updatedAt!: Date;
+	public updatedTimestamp!: number;
 	public sourceGuildId!: Snowflake;
 	public serializedSourceGuild!: TemplateSerializedSourceGuild;
-	public isDirty!: boolean;
+	public isDirty?: boolean;
 
 	public constructor(public readonly client: Client, data: APITemplate) {
 		this.$patch(data);
 	}
 
 	public $patch(data: APITemplate): void {
-		if (data.description) {
-			this.description = data.description;
+		if (data.is_dirty) {
+			this.isDirty = data.is_dirty;
 		}
 
 		this.code = data.code;
 		this.name = data.name;
+		this.description = data.description ?? undefined;
 		this.usageCount = data.usage_count;
 		this.creatorId = data.creator_id;
 		this.creator = new User(this.client, data.creator);
 		this.createdAt = new Date(data.created_at);
+		this.createdTimestamp = this.createdAt.getTime();
 		this.updatedAt = new Date(data.updated_at);
+		this.updatedTimestamp = this.updatedAt.getTime();
 		this.sourceGuildId = data.source_guild_id;
-		this.isDirty = !!data.is_dirty;
-
 		this.serializedSourceGuild = {
 			description: data.serialized_source_guild.description ?? undefined,
 			preferredLocale: data.serialized_source_guild.preferred_locale,
@@ -124,13 +127,6 @@ export class Template {
 			systemChannelId: data.serialized_source_guild.system_channel_id ?? undefined,
 			systemChannelFlags: data.serialized_source_guild.system_channel_flags,
 		};
-	}
-
-	public get createdTimestamp(): number {
-		return this.createdAt.getTime();
-	}
-
-	public get updatedTimestamp(): number {
-		return this.updatedAt.getTime();
+		this.isDirty = data.is_dirty ?? undefined;
 	}
 }

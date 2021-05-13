@@ -6,6 +6,7 @@ export class MessageAttachment {
 	public contentType?: string;
 	public size!: number;
 	public url!: string;
+	public spoiler!: boolean;
 	public proxyUrl!: string;
 	public height?: number;
 	public width?: number;
@@ -15,23 +16,14 @@ export class MessageAttachment {
 	}
 
 	public $patch(data: APIAttachment): void {
-		if (data.height) {
-			this.height = data.height;
-		}
-
-		if (data.width) {
-			this.width = data.width;
-		}
-
 		this.id = data.id;
 		this.filename = data.filename;
 		this.contentType = data.content_type;
 		this.size = data.size;
 		this.url = data.url;
+		this.spoiler = this.url.startsWith('SPOILER_');
 		this.proxyUrl = data.proxy_url;
-	}
-
-	public get spoiler(): boolean {
-		return this.url.startsWith('SPOILER_');
+		this.height = data.height ?? undefined;
+		this.width = data.width ?? undefined;
 	}
 }

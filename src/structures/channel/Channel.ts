@@ -5,6 +5,8 @@ import { deconstruct } from '../../utils/Snowflake';
 export class Channel {
 	public id!: Snowflake;
 	public type!: ChannelType;
+	public createdTimestamp?: number;
+	public createdAt?: Date;
 
 	public constructor(public readonly client: Client, data: APIChannel) {
 		this.$patch(data);
@@ -13,18 +15,8 @@ export class Channel {
 	public $patch(data: APIChannel): void {
 		this.id = data.id;
 		this.type = data.type;
-	}
-
-	public get createdTimestamp(): number | undefined {
-		return deconstruct(this.id)?.timestamp;
-	}
-
-	public get createdAt(): Date | undefined {
-		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
-	}
-
-	public isText(): boolean {
-		return 'messages' in this;
+		this.createdTimestamp = deconstruct(this.id)?.timestamp;
+		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 
 	public toString(): string {

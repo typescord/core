@@ -7,7 +7,7 @@ export class GuildChannel extends Channel {
 	public guildId?: Snowflake;
 	public position?: number;
 	public permissionOverwrites?: APIOverwrite[];
-	public nsfw!: boolean;
+	public nsfw?: boolean;
 	public parentId?: Snowflake;
 
 	public constructor(public readonly guild: Guild, data: APIChannel) {
@@ -19,14 +19,11 @@ export class GuildChannel extends Channel {
 	public $patch(data: APIChannel): void {
 		super.$patch(data);
 
-		if (data.parent_id) {
-			this.parentId = data.parent_id;
-		}
-
 		this.name = data.name;
 		this.guildId = data.guild_id;
 		this.position = data.position;
 		this.permissionOverwrites = data.permission_overwrites;
-		this.nsfw = !!data.nsfw;
+		this.nsfw = data.nsfw;
+		this.parentId = data.parent_id ?? undefined;
 	}
 }

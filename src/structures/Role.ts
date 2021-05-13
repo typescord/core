@@ -4,7 +4,7 @@ import { deconstruct } from '../utils/Snowflake';
 import { Guild } from './guild/Guild';
 import { GuildMember } from './guild/GuildMember';
 
-interface RoleTags {
+export interface RoleTags {
 	botId?: Snowflake;
 	integrationId?: Snowflake;
 }
@@ -13,45 +13,36 @@ export class Role {
 	public id!: Snowflake;
 	public name!: string;
 	public color!: number;
+	public hexColor!: string;
 	public hoist!: boolean;
 	public position!: number;
 	public permissions!: Permissions;
 	public managed!: boolean;
 	public mentionable!: boolean;
 	public tags?: RoleTags;
+	public createdTimestamp?: number;
+	public createdAt?: Date;
 
 	public constructor(public readonly guild: Guild, data: APIRole) {
 		this.$patch(data);
 	}
 
 	public $patch(data: APIRole): void {
-		if (data.tags) {
-			this.tags = {
-				botId: data.tags.bot_id,
-				integrationId: data.tags.integration_id,
-			};
-		}
-
 		this.id = data.id;
 		this.name = data.name;
 		this.color = data.color;
+		this.hexColor = `#${this.color.toString(16).padStart(6, '0')}`;
 		this.hoist = data.hoist;
 		this.position = data.position;
 		this.permissions = data.permissions;
 		this.managed = data.managed;
 		this.mentionable = data.mentionable;
-	}
-
-	public get createdTimestamp(): number | undefined {
-		return deconstruct(this.id)?.timestamp;
-	}
-
-	public get createdAt(): Date | undefined {
-		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
-	}
-
-	public get hexColor(): string {
-		return `#${this.color.toString(16).padStart(6, '0')}`;
+		this.tags = data.tags && {
+			botId: data.tags.bot_id,
+			integrationId: data.tags.integration_id,
+		};
+		this.createdTimestamp = deconstruct(this.id)?.timestamp;
+		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 
 	public get members(): Collection<Snowflake, GuildMember> | undefined {

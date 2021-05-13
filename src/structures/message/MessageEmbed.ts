@@ -50,7 +50,9 @@ export class Embed {
 	public description?: string;
 	public url?: string;
 	public createdTimestamp?: string;
+	public createdAt?: Date;
 	public color?: number;
+	public hexColor?: string;
 	public footer?: EmbedFooter;
 	public image?: EmbedImage;
 	public thumbnail?: EmbedThumbnail;
@@ -64,57 +66,39 @@ export class Embed {
 	}
 
 	public $patch(data: APIEmbed): void {
-		if (data.footer) {
-			this.footer = {
-				text: data.footer.text,
-				iconUrl: data.footer.icon_url,
-				proxyIconUrl: data.footer.proxy_icon_url,
-			};
-		}
-
-		if (data.image) {
-			this.image = {
-				url: data.image.url,
-				proxyUrl: data.image.proxy_url,
-				height: data.image.height,
-				width: data.image.width,
-			};
-		}
-
-		if (data.thumbnail) {
-			this.thumbnail = {
-				url: data.thumbnail.url,
-				proxyUrl: data.thumbnail.proxy_url,
-				height: data.thumbnail.height,
-				width: data.thumbnail.width,
-			};
-		}
-
-		if (data.author) {
-			this.author = {
-				name: data.author.name,
-				url: data.author.url,
-				iconUrl: data.author.icon_url,
-				proxyIconUrl: data.author.proxy_icon_url,
-			};
-		}
-
 		this.title = data.title;
 		this.type = data.type;
 		this.description = data.description;
 		this.url = data.url;
 		this.createdTimestamp = data.timestamp;
+		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 		this.color = data.color;
+		this.hexColor = this.color ? `#${this.color.toString(16).padStart(6, '0')}` : undefined;
+		this.footer = data.footer && {
+			text: data.footer.text,
+			iconUrl: data.footer.icon_url,
+			proxyIconUrl: data.footer.proxy_icon_url,
+		};
+		this.image = data.image && {
+			url: data.image.url,
+			proxyUrl: data.image.proxy_url,
+			height: data.image.height,
+			width: data.image.width,
+		};
+		this.thumbnail = data.thumbnail && {
+			url: data.thumbnail.url,
+			proxyUrl: data.thumbnail.proxy_url,
+			height: data.thumbnail.height,
+			width: data.thumbnail.width,
+		};
 		this.video = data.video;
 		this.provider = data.provider;
+		this.author = data.author && {
+			name: data.author.name,
+			url: data.author.url,
+			iconUrl: data.author.icon_url,
+			proxyIconUrl: data.author.proxy_icon_url,
+		};
 		this.fields = data.fields;
-	}
-
-	public get createdAt(): Date | undefined {
-		return this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
-	}
-
-	public get hexColor(): string | undefined {
-		return this.color ? `#${this.color.toString(16).padStart(6, '0')}` : undefined;
 	}
 }
