@@ -27,8 +27,8 @@ export class AuditLogEntry {
 	public actionType!: AuditLogEvent;
 	public options?: AuditLogOptions;
 	public reason?: string;
-	public createdTimestamp?: number;
-	public createdAt?: Date;
+	public createdTimestamp!: number;
+	public createdAt!: Date;
 
 	public constructor(public readonly logs: AuditLog, data: APIAuditLogEntry) {
 		this.$patch(data);
@@ -46,7 +46,7 @@ export class AuditLogEntry {
 		this.actionType = data.action_type;
 		this.options = data.options;
 		this.reason = data.reason;
-		this.createdTimestamp = deconstruct(this.id)?.timestamp;
-		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdAt = new Date(this.createdTimestamp);
 	}
 }

@@ -10,8 +10,8 @@ export class Sticker {
 	public tags?: string[];
 	public asset!: string;
 	public formatType!: StickerFormatType;
-	public createdTimestamp?: number;
-	public createdAt?: Date;
+	public createdTimestamp!: number;
+	public createdAt!: Date;
 
 	public constructor(public readonly client: Client, data: APISticker) {
 		this.$patch(data);
@@ -25,7 +25,7 @@ export class Sticker {
 		this.tags = data.tags?.split(', ');
 		this.asset = data.asset;
 		this.formatType = data.format_type;
-		this.createdTimestamp = deconstruct(this.id)?.timestamp;
-		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdAt = new Date(this.createdTimestamp);
 	}
 }

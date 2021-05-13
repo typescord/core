@@ -9,8 +9,8 @@ export class Team {
 	public id!: Snowflake;
 	public members = new Collection<Snowflake, TeamMember>();
 	public ownerUserId!: Snowflake;
-	public createdTimestamp?: number;
-	public createdAt?: Date;
+	public createdTimestamp!: number;
+	public createdAt!: Date;
 
 	public constructor(public readonly client: Client, data: APITeam) {
 		this.$patch(data);
@@ -24,7 +24,7 @@ export class Team {
 		this.icon = data.icon ?? undefined;
 		this.id = data.id;
 		this.ownerUserId = data.owner_user_id;
-		this.createdTimestamp = deconstruct(this.id)?.timestamp;
-		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdAt = new Date(this.createdTimestamp);
 	}
 }

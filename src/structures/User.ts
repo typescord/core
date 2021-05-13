@@ -17,8 +17,8 @@ export class User {
 	public verified?: boolean;
 	public email?: string;
 	public premiumType?: UserPremiumType;
-	public createdTimestamp?: number;
-	public createdAt?: Date;
+	public createdTimestamp!: number;
+	public createdAt!: Date;
 
 	public constructor(public readonly client: Client, data: APIUser) {
 		this.$patch(data);
@@ -39,8 +39,8 @@ export class User {
 		this.verified = data.verified;
 		this.email = data.email ?? undefined;
 		this.premiumType = data.premium_type;
-		this.createdTimestamp = deconstruct(this.id)?.timestamp;
-		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdAt = new Date(this.createdTimestamp);
 	}
 
 	public equals(user: User): boolean {

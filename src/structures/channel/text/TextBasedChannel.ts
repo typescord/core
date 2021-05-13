@@ -22,7 +22,7 @@ export function TextBasedChannel<T extends Constructor<Channel>>(BaseClass: T) {
 		}
 
 		public get lastMessage(): Message | undefined {
-			return this.lastMessageId ? this.messages.get(this.lastMessageId) : undefined;
+			return this.lastMessageId && this.messages.get(this.lastMessageId);
 		}
 	};
 }

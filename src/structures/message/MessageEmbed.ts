@@ -52,7 +52,6 @@ export class Embed {
 	public createdTimestamp?: string;
 	public createdAt?: Date;
 	public color?: number;
-	public hexColor?: string;
 	public footer?: EmbedFooter;
 	public image?: EmbedImage;
 	public thumbnail?: EmbedThumbnail;
@@ -73,7 +72,6 @@ export class Embed {
 		this.createdTimestamp = data.timestamp;
 		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 		this.color = data.color;
-		this.hexColor = this.color ? `#${this.color.toString(16).padStart(6, '0')}` : undefined;
 		this.footer = data.footer && {
 			text: data.footer.text,
 			iconUrl: data.footer.icon_url,
@@ -100,5 +98,9 @@ export class Embed {
 			proxyIconUrl: data.author.proxy_icon_url,
 		};
 		this.fields = data.fields;
+	}
+
+	public get hexColor(): string | undefined {
+		return this.color ? `#${this.color.toString(16).padStart(6, '0')}` : undefined;
 	}
 }

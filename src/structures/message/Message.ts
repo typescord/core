@@ -9,8 +9,8 @@ import {
 } from 'discord-api-types';
 import { Client } from '../../clients';
 import { Guild } from '../guild/Guild';
-import { GuildChannel } from '../channel/GuildChannel';
-import { GuildMember } from '../guild/GuildMember';
+/*import { GuildChannel } from '../channel/GuildChannel';
+import { GuildMember } from '../guild/GuildMember';*/
 import { User } from '../User';
 import { Application } from '../Application';
 import { Embed } from './MessageEmbed';
@@ -36,7 +36,6 @@ interface MessageInteraction {
 }
 
 export class Message {
-	public client: Client;
 	public id!: Snowflake;
 	public channelId!: Snowflake;
 	public guildId?: Snowflake;
@@ -67,10 +66,10 @@ export class Message {
 	public stickers?: Sticker[];
 	public referencedMessage?: Message;
 	public interaction?: MessageInteraction;
+	public guild!: Guild;
+	public url!: string;
 
-	public constructor(public readonly channel: GuildChannel, data: APIMessage) {
-		this.client = channel.client;
-
+	public constructor(public readonly client: Client, data: APIMessage) {
 		this.$patch(data);
 	}
 
@@ -81,7 +80,7 @@ export class Message {
 		this.author = new User(this.client, data.author);
 		this.content = data.content;
 		this.createdTimestamp = Number(data.timestamp);
-		this.createdAt = new Date(this.createdTimestamp);
+		this.createdAt = new Date(data.timestamp);
 		this.editedTimestamp = Number(data.edited_timestamp);
 		this.editedAt = this.editedTimestamp ? new Date(this.editedTimestamp) : undefined;
 		this.tts = data.tts;
@@ -108,24 +107,17 @@ export class Message {
 		};
 		this.flags = data.flags;
 		this.stickers = data.stickers?.map((sticker) => new Sticker(this.client, sticker));
-		this.referencedMessage = data.referenced_message ? new Message(this.channel, data.referenced_message) : undefined;
+		// this.referencedMessage = data.referenced_message ? new Message(this.channel, data.referenced_message) : undefined;
 		this.interaction = data.interaction && {
 			...data.interaction,
 			user: new User(this.client, data.interaction.user),
 		};
+		this.url = `https://discord.com/channels/${this.guildId || '@me'}/${this.channelId}/${this.id}`;
 	}
 
-	public get guild(): Guild | undefined {
-		return this.channel.guild;
-	}
-
-	public get member(): GuildMember | undefined {
+	/*public get member(): GuildMember | undefined {
 		return this.guild ? this.guild.members.get(this.author.id) : undefined;
-	}
-
-	public get url(): string {
-		return `https://discord.com/channels/${this.guild ? this.guild.id : '@me'}/${this.channel.id}/${this.id}`;
-	}
+	}*/
 
 	public toString(): string {
 		return this.content;

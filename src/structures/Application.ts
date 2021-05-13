@@ -49,7 +49,7 @@ export class Application {
 		this.slug = data.slug;
 		this.coverImage = data.cover_image;
 		this.flags = data.flags;
-		this.createdTimestamp = this.id && deconstruct(this.id)?.timestamp;
+		this.createdTimestamp = this.id && deconstruct(this.id)!.timestamp;
 		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 	}
 

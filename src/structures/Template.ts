@@ -78,10 +78,6 @@ export class Template {
 	}
 
 	public $patch(data: APITemplate): void {
-		if (data.is_dirty) {
-			this.isDirty = data.is_dirty;
-		}
-
 		this.code = data.code;
 		this.name = data.name;
 		this.description = data.description ?? undefined;

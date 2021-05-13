@@ -80,8 +80,8 @@ export class Guild {
 	public approximatePresenceCount?: number;
 	public welcomeScreen?: GuildWelcomeScreen;
 	public nsfw!: boolean;
-	public createdTimestamp?: number;
-	public createdAt?: Date;
+	public createdTimestamp!: number;
+	public createdAt!: Date;
 
 	public constructor(public readonly client: Client, data: APIGuild | APIPartialGuild) {
 		this.$patch(data);
@@ -108,6 +108,8 @@ export class Guild {
 				emojiName: welcomeChannel.emoji_name ?? undefined,
 			})),
 		};
+		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdAt = new Date(this.createdTimestamp);
 
 		if (isAPIGuild(data)) {
 			if (data.members) {
@@ -160,8 +162,6 @@ export class Guild {
 			this.approximateMemberCount = data.approximate_member_count;
 			this.approximatePresenceCount = data.approximate_presence_count;
 			this.nsfw = data.nsfw;
-			this.createdTimestamp = deconstruct(this.id)?.timestamp;
-			this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
 		}
 	}
 

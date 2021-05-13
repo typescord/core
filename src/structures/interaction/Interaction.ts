@@ -15,8 +15,8 @@ export class Interaction {
 	public channelId?: Snowflake;
 	public token!: string;
 	public version!: number;
-	public createdTimestamp?: number;
-	public createdAt?: Date;
+	public createdTimestamp!: number;
+	public createdAt!: Date;
 	public guildId?: Snowflake;
 	public member?: GuildMember;
 	public user?: User;
@@ -32,8 +32,8 @@ export class Interaction {
 		this.channelId = data.channel_id;
 		this.token = data.token;
 		this.version = data.version;
-		this.createdTimestamp = deconstruct(this.id)?.timestamp;
-		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdAt = new Date(this.createdTimestamp);
 
 		if (isGuildInteraction(data)) {
 			this.guildId = data.guild_id;

@@ -38,6 +38,6 @@ export class GuildMember {
 	}
 
 	public toString(): string {
-		return this.user ? `<@${this.nickname ? '!' : ''}${this.user.id}>` : '';
+		return this.user ? `<@$!${this.user.id}>` : '';
 	}
 }

@@ -16,8 +16,8 @@ export class VoiceState {
 	public selfStream?: boolean;
 	public selfVideo!: boolean;
 	public suppress!: boolean;
-	public requestToSpeakTimestamp?: number;
 	public requestToSpeakAt?: Date;
+	public requestToSpeakTimestamp?: number;
 
 	public constructor(public readonly guild: Guild, data: GatewayVoiceState) {
 		this.$patch(data);
@@ -35,10 +35,8 @@ export class VoiceState {
 		this.selfStream = data.self_stream;
 		this.selfVideo = data.self_video;
 		this.suppress = data.suppress;
-		this.requestToSpeakTimestamp = data.request_to_speak_timestamp
-			? Number(data.request_to_speak_timestamp)
-			: undefined;
-		this.requestToSpeakAt = this.requestToSpeakTimestamp ? new Date(this.requestToSpeakTimestamp) : undefined;
+		this.requestToSpeakAt = data.request_to_speak_timestamp ? new Date(data.request_to_speak_timestamp) : undefined;
+		this.requestToSpeakTimestamp = this.requestToSpeakAt?.getTime();
 	}
 
 	public get channel(): VoiceChannel | StageChannel | undefined {

@@ -13,15 +13,14 @@ export class Role {
 	public id!: Snowflake;
 	public name!: string;
 	public color!: number;
-	public hexColor!: string;
 	public hoist!: boolean;
 	public position!: number;
 	public permissions!: Permissions;
 	public managed!: boolean;
 	public mentionable!: boolean;
 	public tags?: RoleTags;
-	public createdTimestamp?: number;
-	public createdAt?: Date;
+	public createdTimestamp!: number;
+	public createdAt!: Date;
 
 	public constructor(public readonly guild: Guild, data: APIRole) {
 		this.$patch(data);
@@ -31,7 +30,6 @@ export class Role {
 		this.id = data.id;
 		this.name = data.name;
 		this.color = data.color;
-		this.hexColor = `#${this.color.toString(16).padStart(6, '0')}`;
 		this.hoist = data.hoist;
 		this.position = data.position;
 		this.permissions = data.permissions;
@@ -41,8 +39,12 @@ export class Role {
 			botId: data.tags.bot_id,
 			integrationId: data.tags.integration_id,
 		};
-		this.createdTimestamp = deconstruct(this.id)?.timestamp;
-		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdAt = new Date(this.createdTimestamp);
+	}
+
+	public get hexColor(): string {
+		return `#${this.color.toString(16).padStart(6, '0')}`;
 	}
 
 	public get members(): Collection<Snowflake, GuildMember> | undefined {
