@@ -5,7 +5,7 @@ import { Team } from './team/Team';
 import { User } from './User';
 
 export class Application {
-	public id?: Snowflake;
+	public id!: Snowflake;
 	public name?: string;
 	public icon?: string;
 	public description?: string;
@@ -31,7 +31,7 @@ export class Application {
 	}
 
 	public $patch(data: Partial<APIApplication>): void {
-		this.id = data.id;
+		this.id = data.id!;
 		this.name = data.name;
 		this.icon = data.icon ?? undefined;
 		this.description = data.description;
@@ -49,8 +49,8 @@ export class Application {
 		this.slug = data.slug;
 		this.coverImage = data.cover_image;
 		this.flags = data.flags;
-		this.createdTimestamp = this.id && deconstruct(this.id)!.timestamp;
-		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdAt = new Date(this.createdTimestamp);
 	}
 
 	public toString(): string | undefined {
