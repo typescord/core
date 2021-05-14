@@ -22,11 +22,11 @@ export interface RequestPayload {
 	/**
 	 * Query string parameters.
 	 */
-	query?: Record<string, string | number | boolean | null | undefined>;
+	query?: Record<string, any>;
 	/**
 	 * JSON body of the request.
 	 */
-	json?: Record<PropertyKey, unknown>;
+	json?: Record<PropertyKey, any>;
 }
 
 export interface RequestOptions {
