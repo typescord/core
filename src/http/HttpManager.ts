@@ -26,7 +26,7 @@ export interface RequestPayload {
 	/**
 	 * JSON body of the request.
 	 */
-	json?: Record<PropertyKey, any>;
+	json?: any;
 }
 
 export interface RequestOptions {
