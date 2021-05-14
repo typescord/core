@@ -92,7 +92,10 @@ export class HttpManager {
 
 	public constructor(public readonly client: BaseClient, public readonly options: HttpOptions) {
 		if (this.options.sweepInterval > 0) {
-			client.setInterval(() => this.handlers.sweep((handler) => handler.inactive), this.options.sweepInterval);
+			client.setInterval(
+				() => this.handlers.sweep((handler) => handler.inactive && !void this.hashes.delete(handler.id)),
+				this.options.sweepInterval,
+			);
 		}
 
 		this.dot = got.extend({
@@ -192,8 +195,8 @@ export class HttpManager {
 	}
 
 	private createHandler(hash: string, majorParameter: DynamicRoute['majorParameter'], bucketRoute: string) {
-		const queue = new RequestHandler(this, hash, bucketRoute);
-		this.handlers.set(`${majorParameter}:${hash}`, queue);
-		return queue;
+		const handler = new RequestHandler(this, hash, bucketRoute, `${majorParameter}:${hash}` as const);
+		this.handlers.set(handler.id, handler);
+		return handler;
 	}
 }
