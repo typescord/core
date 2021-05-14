@@ -1,6 +1,7 @@
 import { HTTPError, OptionsOfUnknownResponseBody, RequestError, Response, TimeoutError } from 'got';
 import { Queue } from './Queue';
 import { HttpManager } from './HttpManager';
+import { DynamicRoute } from './routing';
 
 const RETRIES_STATUS_CODE = new Set([408, 500, 502, 503, 504, 521, 522, 524]);
 const RETRIES_ERROR_CODE = new Set([
@@ -30,6 +31,7 @@ export class RequestHandler {
 		private readonly manager: HttpManager,
 		private readonly hash: string,
 		private readonly bucketRoute: string,
+		public readonly id: `${DynamicRoute['majorParameter']}:${string}`,
 	) {}
 
 	public get localLimited(): boolean {
@@ -79,10 +81,10 @@ export class RequestHandler {
 			const response = await this.manager.dot(dotOptions);
 
 			const remaining = response.headers['x-ratelimit-remaining'];
-			this.remaining = remaining ? +remaining : 1;
+			this.remaining = remaining ? Number(remaining) : 1;
 
 			const reset = response.headers['x-ratelimit-reset-after'];
-			this.reset = reset ? +reset * 1000 + response.timings.response! + offset : response.timings.response!;
+			this.reset = reset ? Number(reset) * 1000 + response.timings.response! + offset : response.timings.response!;
 
 			const hash = response.headers['x-rateLimit-bucket'] as string;
 			if (hash && hash !== this.hash) {
@@ -90,7 +92,7 @@ export class RequestHandler {
 			}
 
 			const retry = response.headers['retry-after'];
-			const retryAfter = retry ? +retry * 1000 : 0;
+			const retryAfter = retry ? Number(retry) * 1000 : 0;
 
 			if (response.headers['x-ratelimit-global']) {
 				this.manager.delay = this.wait(retryAfter + offset).then(() => (this.manager.delay = undefined));
