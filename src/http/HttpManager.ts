@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Agent as HttpsAgent } from 'https';
-import type { ReadStream } from 'fs';
 import Collection from '@discordjs/collection';
 import { FormData } from '@typescord/famfor';
 import got, { Got, Headers, OptionsOfUnknownResponseBody } from 'got/dist/source';
 import { Agent as Http2Agent } from 'http2-wrapper';
 import { UserAgent } from '../constants';
 import { Exception } from '../exceptions';
-import type { BaseClient } from '../clients/BaseClient';
 import { Snowflake } from '../utils';
-import type { StaticRoute, DynamicRoute } from './routing';
 import { RequestHandler } from './RequestHandler';
+import type { BaseClient } from '../clients/BaseClient';
+import type { StaticRoute, DynamicRoute } from './routing';
+import type { ReadStream } from 'fs';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
@@ -40,7 +40,7 @@ export interface RequestOptions {
 	headers?: Headers;
 	/**
 	 * If the Authorization header should be specified.
-	 * @default true
+	 * @defaultValue true
 	 */
 	auth?: boolean;
 }
@@ -51,34 +51,34 @@ type RouteResult<E> = E extends StaticRoute<infer R> | DynamicRoute<infer R> ? R
 export interface HttpOptions {
 	/**
 	 * The timeout of http requests, in milliseconds.
-	 * @default 10000
+	 * @defaultValue 10000
 	 */
 	requestTimeout: number;
 	/**
 	 * How frequently to delete inactive request buckets, in milliseconds (or Infinity for never).
-	 * @default 60000
+	 * @defaultValue 60000
 	 */
 	sweepInterval: number;
 	/**
 	 * The number of times to retry a failed http request.
-	 * @default 2
+	 * @defaultValue 2
 	 */
 	retryLimit: number;
 	/**
 	 * Time in milliseconds to add for requets (rate limit handling).
 	 * A higher value will reduce rate limit errors.
-	 * @default 0
+	 * @defaultValue 0
 	 */
 	timeOffset: number;
 	/**
 	 * If HTTP/2 should be used instead of HTTP/1.1.
 	 * It will choose either HTTP/1.1 or HTTP/2 depending on the ALPN protocol.
-	 * @default false
+	 * @defaultValue false
 	 */
 	http2: boolean;
 	/**
 	 * The Discord API url.
-	 * @default 'https://discord.com/api/v8'
+	 * @defaultValue 'https://discord.com/api/v8'
 	 */
 	api: string;
 }

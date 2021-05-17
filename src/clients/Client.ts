@@ -1,12 +1,12 @@
 import EventEmitter from 'events';
-import type { GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { Snowflake } from 'discord-api-types';
 import merge from 'lodash.merge';
 import { Events, WebSocketManager } from '../gateway';
-import type { HttpOptions } from '../http';
-import type { DeepRequired } from '../utils';
 import { GatewayException } from '../exceptions';
 import { BaseClient } from './BaseClient';
+import type { HttpOptions } from '../http';
+import type { DeepRequired } from '../utils';
+import type { GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 
 interface ClientEvents extends Record<Events, readonly unknown[]> {
 	raw: [GatewayReceivePayload];
@@ -63,26 +63,26 @@ interface ClientOptions {
 	ws?: {
 		/**
 		 * Discord's gateway version.
-		 * @default 8
+		 * @defaultValue 8
 		 */
 		version?: 7 | 8;
 		/**
 		 * If the Gateway should send zlib-compressed payloads.
 		 * In this case, the client will inflate theses payloads.
 		 * *The client will never send compressed payload.*
-		 * @default false
+		 * @defaultValue false
 		 */
 		compress?: boolean;
 		/**
 		 * Value between 50 and 250, total number of members where the gateway
 		 * will stop sending offline members in the guild member list.
-		 * @default 50
+		 * @defaultValue 50
 		 */
 		largeThreshold?: number;
 		/**
 		 * Enabled gateway intents for this connection.
 		 * https://discord.com/developers/docs/topics/gateway#gateway-intents
-		 * @default 513
+		 * @defaultValue 513
 		 */
 		intents?: number;
 		/**
@@ -90,7 +90,7 @@ interface ClientOptions {
 		 * Destroys the Client if the Hello packet
 		 * is not received before the specified timeout.
 		 * If set to `Infinity`, the timeout will not be applied.
-		 * @default 20_000
+		 * @defaultValue 20_000
 		 */
 		helloTimeout?: number;
 		/**
@@ -101,12 +101,12 @@ interface ClientOptions {
 		rateLimit?: {
 			/**
 			 * Max commands that can be made in `time`.
-			 * @default 120
+			 * @defaultValue 120
 			 */
 			limit?: number;
 			/**
 			 * Time in milliseconds
-			 * @default 6_000
+			 * @defaultValue 6_000
 			 */
 			time?: number;
 		};
