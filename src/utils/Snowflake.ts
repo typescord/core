@@ -14,7 +14,7 @@ export interface Snowflake<T extends number | bigint = number> {
 /**
  * Descontruct a snowflake. **This doesn't check the validity of the snowflake.**
  *
- * @param input A snowflake.
+ * @param input - A snowflake.
  * @returns The decontructed snowflake or `undefined` if invalid BigInt.
  */
 export function deconstruct(input: string): Snowflake | undefined {

@@ -11,13 +11,43 @@ import { Role } from '../Role';
 import { User } from '../User';
 import { Interaction } from './Interaction';
 
+/**
+ * Structure representing a command interaction
+ */
 export class CommandInteraction extends Interaction {
+	/**
+	 * The id of the invoked command
+	 */
 	public id!: Snowflake;
+
+	/**
+	 * The name of the invoked command
+	 */
 	public name!: string;
+
+	/**
+	 * The params and values of the invoked command
+	 */
 	public options?: APIApplicationCommandInteractionDataOption[];
+
+	/**
+	 * The users involved in the invoked command
+	 */
 	public users = new Collection<Snowflake, User>();
+
+	/**
+	 * The roles involved in the invoked command
+	 */
 	public roles = new Collection<Snowflake, Role>();
+
+	/**
+	 * The members involved in the invoked command
+	 */
 	public members = new Collection<Snowflake, GuildMember>();
+
+	/**
+	 * The channels involved in the invoked command
+	 */
 	public channels = new Collection<Snowflake, GuildChannel>();
 
 	public constructor(client: Client, data: APIApplicationCommandGuildInteraction) {

@@ -2,16 +2,58 @@ import { APIGuildPreview, GuildFeature, Snowflake } from 'discord-api-types';
 import { Client } from '../../clients';
 import { GuildPreviewEmoji } from '../emoji/GuildPreviewEmoji';
 
+/**
+ * Structure representing a guild preview
+ */
 export class GuildPreview {
+	/**
+	 * The id of the guild
+	 */
 	public id!: Snowflake;
+
+	/**
+	 * The name of the guild
+	 */
 	public name!: string;
+
+	/**
+	 * The icon hash of the guild
+	 */
 	public icon?: string;
+
+	/**
+	 * The splash hash of the guild
+	 */
 	public splash?: string;
+
+	/**
+	 * The discovery splash hash of the guild
+	 */
 	public discoverySplash?: string;
+
+	/**
+	 * The custom emojis of the guild
+	 */
 	public emojis!: GuildPreviewEmoji[];
+
+	/**
+	 * The enabled features of the guild
+	 */
 	public features!: GuildFeature[];
+
+	/**
+	 * The approximate number of members in the guild
+	 */
 	public approximateMemberCount!: number;
+
+	/**
+	 * The approximate number of online members in the guild
+	 */
 	public approximatePresenceCount!: number;
+
+	/**
+	 * The guild description if the guild is discoverable
+	 */
 	public description!: string;
 
 	public constructor(public readonly client: Client, data: APIGuildPreview) {

@@ -4,8 +4,13 @@ import { Channel } from '../Channel';
 import { User } from '../../User';
 import { TextBasedChannel } from './TextBasedChannel';
 
+/**
+ * Structure representing a DM channel
+ */
 export class DMChannel extends TextBasedChannel(Channel) {
-	public topic?: string;
+	/**
+	 * The user(s) of the DM
+	 */
 	public recipients = new Collection<Snowflake, User>();
 
 	public $patch(data: APIChannel): void {

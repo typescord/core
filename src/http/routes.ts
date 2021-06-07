@@ -1,7 +1,7 @@
 import { ReadStream } from 'fs';
-import type * as d from 'discord-api-types/rest/v8';
 import { Snowflake } from 'discord-api-types';
 import { routify, StaticRoute } from './routing';
+import type * as d from 'discord-api-types/rest/v8';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 type _ = undefined;

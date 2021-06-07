@@ -3,10 +3,28 @@ import { Emoji } from '../emoji/Emoji';
 import { Guild } from '../guild/Guild';
 import { GuildPreview } from '../guild/GuildPreview';
 
+/**
+ * Structure representing the base of a guild emoji
+ */
 export class BaseGuildEmoji extends Emoji {
+	/**
+	 * Whether this emoji must be wrapped in colons
+	 */
 	public requireColons?: boolean;
+
+	/**
+	 * Whether this emoji is managed
+	 */
 	public managed?: boolean;
+
+	/**
+	 * Whether this emoji is animated
+	 */
 	public available?: boolean;
+
+	/**
+	 * The roles allowed to use this emoji
+	 */
 	public roleIds?: Snowflake[];
 
 	public constructor(public readonly guild: Guild | GuildPreview, data: APIEmoji) {

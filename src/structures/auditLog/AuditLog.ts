@@ -6,10 +6,28 @@ import { User } from '../User';
 import { Webhook } from '../Webhook';
 import { AuditLogEntry } from './AuditLogEntry';
 
+/**
+ * Contains audit log of guilds
+ */
 export class AuditLog {
+	/**
+	 * Webhooks found in this audit log
+	 */
 	public webhooks = new Collection<Snowflake, Webhook>();
+
+	/**
+	 * Users found in this audit log
+	 */
 	public users = new Collection<Snowflake, User>();
+
+	/**
+	 * The entries of the audit log
+	 */
 	public auditLogEntries = new Collection<Snowflake, AuditLogEntry>();
+
+	/**
+	 * Integrations found in this audit log
+	 */
 	public integrations = new Collection<Snowflake, GuildIntegration>();
 
 	public constructor(public readonly guild: Guild, data: APIAuditLog) {

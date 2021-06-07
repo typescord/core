@@ -9,17 +9,63 @@ export interface RoleTags {
 	integrationId?: Snowflake;
 }
 
+/**
+ * Structure representing a guild role
+ */
 export class Role {
+	/**
+	 * The id of the role
+	 */
 	public id!: Snowflake;
+
+	/**
+	 * The name of the role
+	 */
 	public name!: string;
+
+	/**
+	 * The decimal color code of the role
+	 */
 	public color!: number;
+
+	/**
+	 * Whether or not this role is pinned in the user listing
+	 */
 	public hoist!: boolean;
+
+	/**
+	 * The position of the role
+	 */
 	public position!: number;
+
+	/**
+	 * The permission bit set of the role
+	 */
 	public permissions!: Permissions;
+
+	/**
+	 * Whether or not this role is managed by an integration
+	 */
 	public managed!: boolean;
+
+	/**
+	 * Whether or not this role is mentionable
+	 */
 	public mentionable!: boolean;
+
+	/**
+	 * The tags of the role
+	 */
 	public tags?: RoleTags;
+
+	/**
+	 * The timestamp when the role was created
+	 */
 	public createdTimestamp!: number;
+
+	/**
+	 * The date when the role was created
+	 */
 	public createdAt!: Date;
 
 	public constructor(public readonly guild: Guild, data: APIRole) {
@@ -43,10 +89,16 @@ export class Role {
 		this.createdAt = new Date(this.createdTimestamp);
 	}
 
+	/**
+	 * The hexadecimal color code of the role
+	 */
 	public get hexColor(): string {
 		return `#${this.color.toString(16).padStart(6, '0')}`;
 	}
 
+	/**
+	 * The members having this role
+	 */
 	public get members(): Collection<Snowflake, GuildMember> | undefined {
 		return this.guild.members.filter((member) => member.roles.includes(this.id));
 	}

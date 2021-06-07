@@ -5,23 +5,93 @@ import { GuildChannel } from './channel/GuildChannel';
 import { Guild } from './guild/Guild';
 import { User } from './User';
 
+/**
+ * Structure representing an invite to a guild or group DM channel
+ */
 export class Invite {
+	/**
+	 * The code of the invite
+	 */
 	public code!: string;
+
+	/**
+	 * The guild this invite is for
+	 */
 	public guild?: Guild;
+
+	/**
+	 * The channel this invite is for
+	 */
 	public channel?: GuildChannel;
+
+	/**
+	 * The user who created the invite
+	 */
 	public inviter?: User;
+
+	/**
+	 * The type of target for this voice channel invite
+	 */
 	public targetType?: InviteTargetType;
+
+	/**
+	 * The user whose stream to display for this voice channel stream invite
+	 */
 	public targetUser?: User;
+
+	/**
+	 * The embedded application to open for this voice channel embedded application invite
+	 */
 	public targetApplication?: Partial<Application>;
+
+	/**
+	 * The approximate count of online members
+	 */
 	public approximatePresenceCount?: number;
+
+	/**
+	 * The approximate count of total members
+	 */
 	public approximateMemberCount?: number;
+
+	/**
+	 * The number of times this invite has been used
+	 */
 	public uses!: number;
+
+	/**
+	 * The max number of times this invite can be used
+	 */
 	public maxUses!: number;
+
+	/**
+	 * The duration (in seconds) after which the invite expires
+	 */
 	public maxAge!: number;
+
+	/**
+	 * Whether or not this invite only grants temporary membership
+	 */
 	public temporary!: boolean;
-	public createdAt!: Date;
+
+	/**
+	 * The timestamp when the invite was created
+	 */
 	public createdTimestamp!: number;
+
+	/**
+	 * The date when the invite was created
+	 */
+	public createdAt!: Date;
+
+	/**
+	 * The timestamp when the invite expires
+	 */
 	public expiresTimestamp?: number;
+
+	/**
+	 * The date when the invite expires
+	 */
 	public expiresAt?: Date;
 
 	public constructor(public readonly client: Client, data: APIExtendedInvite) {

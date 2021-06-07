@@ -8,17 +8,63 @@ function isGuildInteraction(data: any): data is APIGuildInteraction {
 	return 'guild_id' in data;
 }
 
+/**
+ * Structure representing an interaction
+ */
 export class Interaction {
+	/**
+	 * The id of the interaction
+	 */
 	public id!: Snowflake;
+
+	/**
+	 * The application id of the interaction is for
+	 */
 	public applicationId!: Snowflake;
+
+	/**
+	 * The type of the interaction
+	 */
 	public type!: InteractionType;
+
+	/**
+	 * The channel it was sent from
+	 */
 	public channelId?: Snowflake;
+
+	/**
+	 * The continuation token for responding to the interaction
+	 */
 	public token!: string;
+
+	/**
+	 * The integration version (always 1)
+	 */
 	public version!: number;
+
+	/**
+	 * The timestamp when the integration was created
+	 */
 	public createdTimestamp!: number;
+
+	/**
+	 * The date when the integration was created
+	 */
 	public createdAt!: Date;
+
+	/**
+	 * The guild it was sent from
+	 */
 	public guildId?: Snowflake;
+
+	/**
+	 * The guild member data for the invoking user
+	 */
 	public member?: GuildMember;
+
+	/**
+	 * User object for the invoking user if invoked in a DM channel
+	 */
 	public user?: User;
 
 	public constructor(public readonly client: Client, data: APIApplicationCommandInteraction) {
@@ -43,6 +89,11 @@ export class Interaction {
 		}
 	}
 
+	/**
+	 * Whether the interaction is a command
+	 *
+	 * @returns true if it's a command interaction, false otherwise
+	 */
 	public isCommand(): boolean {
 		return this.type === InteractionType.ApplicationCommand;
 	}
