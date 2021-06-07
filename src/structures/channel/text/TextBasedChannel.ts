@@ -8,9 +8,24 @@ type Constructor<T = {}> = new (...args: any[]) => T;
 
 export function TextBasedChannel<T extends Constructor<Channel>>(BaseClass: T) {
 	return class extends BaseClass {
+		/**
+		 * The messages sent in the channel
+		 */
 		public messages = new Collection<Snowflake, Message>();
+
+		/**
+		 * The id of the last message sent in the channel
+		 */
 		public lastMessageId?: Snowflake;
+
+		/**
+		 * The timestamp when the last pinned message was pinned
+		 */
 		public lastPinTimestamp?: number;
+
+		/**
+		 * The date when the last pinned message was pinned
+		 */
 		public lastPinAt?: Date;
 
 		public $patch(data: APIChannel): void {
@@ -21,6 +36,9 @@ export function TextBasedChannel<T extends Constructor<Channel>>(BaseClass: T) {
 			this.lastPinAt = this.lastPinTimestamp ? new Date(this.lastPinTimestamp) : undefined;
 		}
 
+		/**
+		 * The last message sent in the channel
+		 */
 		public get lastMessage(): Message | undefined {
 			return this.lastMessageId && this.messages.get(this.lastMessageId);
 		}

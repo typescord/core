@@ -58,19 +58,73 @@ interface GuildCreateOverwrite {
 	id: number | string;
 }
 
+/**
+ * Structure representing a guild template
+ */
 export class Template {
+	/**
+	 * The code of the template
+	 */
 	public code!: string;
+
+	/**
+	 * The name of the template
+	 */
 	public name!: string;
+
+	/**
+	 * The description for the template
+	 */
 	public description?: string;
+
+	/**
+	 * The number of times this template has been used
+	 */
 	public usageCount!: number;
+
+	/**
+	 * The id of the user who created the template
+	 */
 	public creatorId!: Snowflake;
+
+	/**
+	 * The user who created the template
+	 */
 	public creator!: User;
+
+	/**
+	 * The date when the template was created
+	 */
 	public createdAt!: Date;
+
+	/**
+	 * The timestamp when the template was created
+	 */
 	public createdTimestamp!: number;
+
+	/**
+	 * The date when the template was last synced to the source guild
+	 */
 	public updatedAt!: Date;
+
+	/**
+	 * The timestamp when the template was last synced to the source guild
+	 */
 	public updatedTimestamp!: number;
+
+	/**
+	 * The id of the guild this template is based on
+	 */
 	public sourceGuildId!: Snowflake;
+
+	/**
+	 * The guild snapshot this template contains
+	 */
 	public serializedSourceGuild!: TemplateSerializedSourceGuild;
+
+	/**
+	 * Whether or not the template has unsynced changes
+	 */
 	public isDirty?: boolean;
 
 	public constructor(public readonly client: Client, data: APITemplate) {

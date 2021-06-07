@@ -2,8 +2,18 @@ import { APIChannel } from 'discord-api-types';
 import { GuildChannel } from '../GuildChannel';
 import { TextBasedChannel } from './TextBasedChannel';
 
+/**
+ * Structure representing a guild text channel
+ */
 export class TextChannel extends TextBasedChannel(GuildChannel) {
+	/**
+	 * The topic of the channel
+	 */
 	public topic?: string;
+
+	/**
+	 * The amount of seconds a user has to wait before sending another message
+	 */
 	public rateLimitPerUser?: number;
 
 	public $patch(data: APIChannel): void {

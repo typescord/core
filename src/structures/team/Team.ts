@@ -4,12 +4,38 @@ import { Client } from '../../clients';
 import { deconstruct } from '../../utils/Snowflake';
 import { TeamMember } from './TeamMember';
 
+/**
+ * Structure representing a team
+ */
 export class Team {
+	/**
+	 * The icon hash of the team
+	 */
 	public icon?: string;
+
+	/**
+	 * The id of the team
+	 */
 	public id!: Snowflake;
+
+	/**
+	 * The members of the team
+	 */
 	public members = new Collection<Snowflake, TeamMember>();
+
+	/**
+	 * The id of the current team owner
+	 */
 	public ownerUserId!: Snowflake;
+
+	/**
+	 * The timestamp when the team was created
+	 */
 	public createdTimestamp!: number;
+
+	/**
+	 * The date when the team was created
+	 */
 	public createdAt!: Date;
 
 	public constructor(public readonly client: Client, data: APITeam) {
