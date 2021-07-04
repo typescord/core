@@ -279,7 +279,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 	private checkReady() {
 		if (this.readyTimeout) {
-			this.client.clearTimeout(this.readyTimeout);
+			clearTimeout(this.readyTimeout);
 			this.readyTimeout = undefined;
 		}
 
@@ -289,7 +289,7 @@ export class WebSocketClient extends events.EventEmitter {
 			return;
 		}
 
-		this.readyTimeout = this.client.setTimeout(() => {
+		this.readyTimeout = setTimeout(() => {
 			this.readyTimeout = undefined;
 			this.status = Status.Ready;
 			this.emit(WebSocketEvents.Ready, this.expectedGuilds);
@@ -303,13 +303,13 @@ export class WebSocketClient extends events.EventEmitter {
 
 		if (reset) {
 			if (this.helloTimeout) {
-				this.client.clearTimeout(this.helloTimeout);
+				clearTimeout(this.helloTimeout);
 				this.helloTimeout = undefined;
 			}
 			return;
 		}
 
-		this.helloTimeout = this.client.setTimeout(() => {
+		this.helloTimeout = setTimeout(() => {
 			this.destroy({ reset: true, closeCode: 4009 });
 		}, this.client.options.ws.helloTimeout);
 	}
@@ -317,17 +317,17 @@ export class WebSocketClient extends events.EventEmitter {
 	private updateHeartbeatTimer(time: number) {
 		if (time === -1) {
 			if (this.heartbeatInterval) {
-				this.client.clearInterval(this.heartbeatInterval);
+				clearInterval(this.heartbeatInterval);
 				this.heartbeatInterval = undefined;
 			}
 			return;
 		}
 
 		if (this.heartbeatInterval) {
-			this.client.clearInterval(this.heartbeatInterval);
+			clearInterval(this.heartbeatInterval);
 		}
 
-		this.heartbeatInterval = this.client.setInterval(() => this.sendHeartbeat(), time);
+		this.heartbeatInterval = setInterval(() => this.sendHeartbeat(), time);
 	}
 
 	private sendHeartbeat(): void {
@@ -407,7 +407,7 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		if (this.rateLimit.remaining === this.rateLimit.limit) {
-			this.rateLimit.timer = this.client.setTimeout(() => {
+			this.rateLimit.timer = setTimeout(() => {
 				this.rateLimit.remaining = this.rateLimit.limit;
 				this.processQueue();
 			}, this.rateLimit.time);
@@ -473,7 +473,7 @@ export class WebSocketClient extends events.EventEmitter {
 		this.rateLimit.queue = [];
 
 		if (this.rateLimit.timer) {
-			this.client.clearTimeout(this.rateLimit.timer);
+			clearTimeout(this.rateLimit.timer);
 			this.rateLimit.timer = undefined;
 		}
 	}

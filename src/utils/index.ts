@@ -1,2 +1,2 @@
-export * as Snowflake from './Snowflake';
+export * as Snowflake from './snowflake';
 export * from './types';

@@ -1,9 +1,10 @@
 import EventEmitter from 'events';
+import { setTimeout as wait } from 'timers/promises';
 import { GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import { Snowflake } from 'discord-api-types';
 import { Client } from '../clients';
 import { Exception, GatewayException } from '../exceptions';
-import { getGatewayBot } from '../http/routes';
+import { gatewayBot } from '../http/routes';
 import { Events } from './Events';
 import { WebSocketClient, WebSocketEvents } from './WebSocketClient';
 
@@ -56,7 +57,7 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	public async connect(): Promise<void> {
-		const gateway = await this.client.$request('get', getGatewayBot).catch((error) => {
+		const gateway = await this.client.$request('get', gatewayBot).catch((error) => {
 			throw error.httpStatus === 401 ? new Exception('TOKEN_INVALID') : error;
 		});
 
@@ -139,7 +140,7 @@ export class WebSocketManager extends EventEmitter {
 			await this.createClient();
 		} catch (error) {
 			if (error.httpStatus !== 401) {
-				await new Promise((resolve) => this.client.setTimeout(resolve, 5000));
+				await wait(5000);
 				this.reconnecting = false;
 				return this.reconnect();
 			}

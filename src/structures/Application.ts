@@ -1,6 +1,6 @@
 import { APIApplication, ApplicationFlags, Snowflake } from 'discord-api-types';
 import { Client } from '../clients';
-import { deconstruct } from '../utils/Snowflake';
+import { getTimestamp } from '../utils/snowflake';
 import { Team } from './team/Team';
 import { User } from './User';
 
@@ -49,7 +49,7 @@ export class Application {
 		this.slug = data.slug;
 		this.coverImage = data.cover_image;
 		this.flags = data.flags;
-		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdTimestamp = getTimestamp(this.id);
 		this.createdAt = new Date(this.createdTimestamp);
 	}
 

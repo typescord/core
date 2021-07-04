@@ -1,6 +1,6 @@
 import Collection from '@discordjs/collection';
 import { APIRole, Permissions, Snowflake } from 'discord-api-types';
-import { deconstruct } from '../utils/Snowflake';
+import { getTimestamp } from '../utils/snowflake';
 import { Guild } from './guild/Guild';
 import { GuildMember } from './guild/GuildMember';
 
@@ -39,7 +39,7 @@ export class Role {
 			botId: data.tags.bot_id,
 			integrationId: data.tags.integration_id,
 		};
-		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdTimestamp = getTimestamp(this.id);
 		this.createdAt = new Date(this.createdTimestamp);
 	}
 

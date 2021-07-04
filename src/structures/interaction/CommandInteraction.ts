@@ -12,7 +12,6 @@ import { User } from '../User';
 import { Interaction } from './Interaction';
 
 export class CommandInteraction extends Interaction {
-	public id!: Snowflake;
 	public name!: string;
 	public options?: APIApplicationCommandInteractionDataOption[];
 	public users = new Collection<Snowflake, User>();

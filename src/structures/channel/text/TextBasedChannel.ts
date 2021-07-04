@@ -3,9 +3,10 @@ import { APIChannel, Snowflake } from 'discord-api-types';
 import { Channel } from '../Channel';
 import { Message } from '../../message/Message';
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any
 type Constructor<T = {}> = new (...args: any[]) => T;
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function TextBasedChannel<T extends Constructor<Channel>>(BaseClass: T) {
 	return class extends BaseClass {
 		public messages = new Collection<Snowflake, Message>();

@@ -1,12 +1,8 @@
-import { APIApplicationCommandInteraction, APIGuildInteraction, InteractionType, Snowflake } from 'discord-api-types';
+import { APIApplicationCommandInteraction, InteractionType, Snowflake } from 'discord-api-types';
 import { Client } from '../../clients';
-import { deconstruct } from '../../utils/Snowflake';
+import { getTimestamp } from '../../utils/snowflake';
 import { GuildMember } from '../guild/GuildMember';
 import { User } from '../User';
-
-function isGuildInteraction(data: any): data is APIGuildInteraction {
-	return 'guild_id' in data;
-}
 
 export class Interaction {
 	public id!: Snowflake;
@@ -32,10 +28,10 @@ export class Interaction {
 		this.channelId = data.channel_id;
 		this.token = data.token;
 		this.version = data.version;
-		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdTimestamp = getTimestamp(this.id);
 		this.createdAt = new Date(this.createdTimestamp);
 
-		if (isGuildInteraction(data)) {
+		if ('guild_id' in data) {
 			this.guildId = data.guild_id;
 			// this.member = new GuildMember(guild, data.member);
 		} else {

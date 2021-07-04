@@ -1,6 +1,6 @@
 import { APISticker, Snowflake, StickerFormatType } from 'discord-api-types';
 import { Client } from '../../clients';
-import { deconstruct } from '../../utils/Snowflake';
+import { getTimestamp } from '../../utils/snowflake';
 
 export class Sticker {
 	public id!: Snowflake;
@@ -25,7 +25,7 @@ export class Sticker {
 		this.tags = data.tags?.split(', ');
 		this.asset = data.asset;
 		this.formatType = data.format_type;
-		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdTimestamp = getTimestamp(this.id);
 		this.createdAt = new Date(this.createdTimestamp);
 	}
 }
