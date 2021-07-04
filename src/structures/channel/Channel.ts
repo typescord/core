@@ -1,5 +1,5 @@
-import { APIChannel, ChannelType, Snowflake } from 'discord-api-types';
-import { Client } from '../../clients';
+import type { APIChannel, ChannelType } from 'discord-api-types/v8';
+import { Client, Snowflake } from '../..';
 import { getTimestamp } from '../../utils/snowflake';
 
 export class Channel {

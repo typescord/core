@@ -1,5 +1,5 @@
-import { APIApplication, ApplicationFlags, Snowflake } from 'discord-api-types';
-import { Client } from '../clients';
+import type { APIApplication, ApplicationFlags } from 'discord-api-types/v8';
+import { Client, Snowflake } from '..';
 import { getTimestamp } from '../utils/snowflake';
 import { Team } from './team/Team';
 import { User } from './User';

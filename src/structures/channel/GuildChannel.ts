@@ -1,4 +1,5 @@
-import { APIChannel, APIOverwrite, Snowflake } from 'discord-api-types';
+import type { APIChannel, APIOverwrite } from 'discord-api-types/v8';
+import type { Snowflake } from '../..';
 import { Guild } from '../guild/Guild';
 import { Channel } from './Channel';
 

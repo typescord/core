@@ -1,5 +1,5 @@
-import { APIPartialEmoji, Snowflake } from 'discord-api-types';
-import { Client } from '../../clients';
+import type { APIPartialEmoji } from 'discord-api-types';
+import type { Client, Snowflake } from '../..';
 import { getTimestamp } from '../../utils/snowflake';
 
 export class Emoji {

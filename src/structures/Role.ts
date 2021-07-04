@@ -1,5 +1,6 @@
 import Collection from '@discordjs/collection';
-import { APIRole, Permissions, Snowflake } from 'discord-api-types';
+import type { APIRole, Permissions } from 'discord-api-types/v8';
+import { Snowflake } from '..';
 import { getTimestamp } from '../utils/snowflake';
 import { Guild } from './guild/Guild';
 import { GuildMember } from './guild/GuildMember';

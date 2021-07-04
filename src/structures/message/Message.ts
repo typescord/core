@@ -1,13 +1,12 @@
-import {
+import type {
 	APIMessage,
 	APIReaction,
 	InteractionType,
 	MessageActivityType,
 	MessageFlags,
 	MessageType,
-	Snowflake,
-} from 'discord-api-types';
-import { Client } from '../../clients';
+} from 'discord-api-types/v8';
+import type { Client, Snowflake } from '../..';
 import { Guild } from '../guild/Guild';
 /*import { GuildChannel } from '../channel/GuildChannel';
 import { GuildMember } from '../guild/GuildMember';*/

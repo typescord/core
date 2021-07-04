@@ -1,4 +1,5 @@
-import { APIAuditLogChange, APIAuditLogEntry, AuditLogEvent, AuditLogOptionsType, Snowflake } from 'discord-api-types';
+import type { APIAuditLogChange, APIAuditLogEntry, AuditLogEvent, AuditLogOptionsType } from 'discord-api-types/v8';
+import { Snowflake } from '../..';
 import { getTimestamp } from '../../utils/snowflake';
 import { AuditLog } from './AuditLog';
 

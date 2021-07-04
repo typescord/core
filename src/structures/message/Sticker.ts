@@ -1,5 +1,5 @@
-import { APISticker, Snowflake, StickerFormatType } from 'discord-api-types';
-import { Client } from '../../clients';
+import type { APISticker, StickerFormatType } from 'discord-api-types/v8';
+import type { Client, Snowflake } from '../..';
 import { getTimestamp } from '../../utils/snowflake';
 
 export class Sticker {

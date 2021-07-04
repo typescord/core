@@ -1,4 +1,5 @@
-import { APIGuildMember, Snowflake } from 'discord-api-types';
+import type { APIGuildMember } from 'discord-api-types/v8';
+import type { Snowflake } from '../..';
 import { Guild } from '../guild/Guild';
 import { User } from '../User';
 

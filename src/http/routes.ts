@@ -1,4 +1,4 @@
-import type * as d from 'discord-api-types/rest/v8';
+import type * as d from 'discord-api-types/v8';
 import { StaticRoute } from './routing';
 
 // TODO: simplify this when TypeScript will CORRECTLY infer some types (https://github.com/microsoft/TypeScript/issues/10571)

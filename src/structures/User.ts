@@ -1,4 +1,4 @@
-import { APIUser, Snowflake, UserFlags, UserPremiumType } from 'discord-api-types';
+import type { APIUser, Snowflake, UserFlags, UserPremiumType } from 'discord-api-types/v8';
 import { Client } from '../clients';
 import { getTimestamp } from '../utils/snowflake';
 

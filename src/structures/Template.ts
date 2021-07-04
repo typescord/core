@@ -1,4 +1,4 @@
-import {
+import type {
 	APITemplate,
 	ChannelType,
 	GuildDefaultMessageNotifications,
@@ -7,8 +7,8 @@ import {
 	GuildVerificationLevel,
 	OverwriteType,
 	Permissions,
-	Snowflake,
-} from 'discord-api-types';
+} from 'discord-api-types/v8';
+import { Snowflake } from '..';
 import { Client } from '../clients';
 import { User } from './User';
 

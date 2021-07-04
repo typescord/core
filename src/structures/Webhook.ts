@@ -1,5 +1,5 @@
-import { APIWebhook, Snowflake, WebhookType } from 'discord-api-types';
-import { Client } from '../clients';
+import type { APIWebhook, WebhookType } from 'discord-api-types/v8';
+import type { Client, Snowflake } from '..';
 import { getTimestamp } from '../utils/snowflake';
 import { TextChannel } from './channel/text/TextChannel';
 import { Guild } from './guild/Guild';

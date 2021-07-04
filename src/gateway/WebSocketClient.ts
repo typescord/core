@@ -1,18 +1,14 @@
 import events from 'events';
 import { encode } from 'querystring';
 import { Inflate, constants, createInflate } from 'zlib';
+import WebSocket from 'ws';
 import {
 	GatewayDispatchEvents,
 	GatewayOPCodes,
 	GatewayReceivePayload,
 	GatewaySendPayload,
-	Snowflake,
-} from 'discord-api-types';
-import WebSocket from 'ws';
-import { Client } from '../clients';
-import { Exception, GatewayException } from '../exceptions';
-import { Events } from './Events';
-import { Status, WebSocketManager } from './WebSocketManager';
+} from 'discord-api-types/gateway/v8';
+import { Client, Exception, GatewayException, Events, WebSocketStatus, WebSocketManager, Snowflake } from '..';
 
 let erlpack: typeof import('@typescord/erlpack') | undefined;
 try {
@@ -83,7 +79,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 	public readonly client: Client;
 	public ping = -1;
-	public status = Status.Idle;
+	public status = WebSocketStatus.Idle;
 	public eventsAttached = false;
 	public sessionId?: string;
 	public connectedAt?: number;
@@ -101,7 +97,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 	public async connect(): Promise<void> {
 		if (this.connection?.readyState === WebSocket.OPEN) {
-			return this.status === Status.Ready ? undefined : this.identify();
+			return this.status === WebSocketStatus.Ready ? undefined : this.identify();
 		}
 
 		if (this.connection) {
@@ -121,7 +117,8 @@ export class WebSocketClient extends events.EventEmitter {
 			gatewayOptions.compress = 'zlib-stream';
 		}
 
-		this.status = this.status === Status.Disconnected ? Status.Reconnecting : Status.Connecting;
+		this.status =
+			this.status === WebSocketStatus.Disconnected ? WebSocketStatus.Reconnecting : WebSocketStatus.Connecting;
 		// reset hello timeout
 		this.updateHelloTimeout(true);
 
@@ -146,7 +143,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 	private onOpen(): void {
 		this.connectedAt = Date.now();
-		this.status = Status.Nearly;
+		this.status = WebSocketStatus.Nearly;
 	}
 
 	private async onMessage(data: string | Buffer): Promise<void> {
@@ -204,7 +201,7 @@ export class WebSocketClient extends events.EventEmitter {
 			this.cleanupConnection();
 		}
 
-		this.status = Status.Disconnected;
+		this.status = WebSocketStatus.Disconnected;
 		this.emit(WebSocketEvents.Close, new GatewayException(code, message));
 	}
 
@@ -217,14 +214,14 @@ export class WebSocketClient extends events.EventEmitter {
 
 				this.sessionId = packet.d.session_id;
 				this.expectedGuilds = new Set(packet.d.guilds.map((guild) => guild.id));
-				this.status = Status.WaitingForGuilds;
+				this.status = WebSocketStatus.WaitingForGuilds;
 				this.lastHeartbeatAcked = true;
 
 				this.sendHeartbeat();
 			} else if (packet.t === GatewayDispatchEvents.Resumed) {
 				this.emit(WebSocketEvents.Resumed);
 
-				this.status = Status.Ready;
+				this.status = WebSocketStatus.Ready;
 				this.lastHeartbeatAcked = true;
 
 				this.sendHeartbeat();
@@ -254,7 +251,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 				this.sequence = -1;
 				this.sessionId = undefined;
-				this.status = Status.Reconnecting;
+				this.status = WebSocketStatus.Reconnecting;
 				this.emit(WebSocketEvents.InvalidSession);
 				break;
 
@@ -270,7 +267,7 @@ export class WebSocketClient extends events.EventEmitter {
 			default:
 				this.manager.handlePacket(packet);
 
-				if (this.status === Status.WaitingForGuilds && packet.t === GatewayDispatchEvents.GuildCreate) {
+				if (this.status === WebSocketStatus.WaitingForGuilds && packet.t === GatewayDispatchEvents.GuildCreate) {
 					this.expectedGuilds?.delete(packet.d.id);
 					this.checkReady();
 				}
@@ -284,14 +281,14 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		if (!this.expectedGuilds?.size) {
-			this.status = Status.Ready;
+			this.status = WebSocketStatus.Ready;
 			this.emit(WebSocketEvents.Ready);
 			return;
 		}
 
 		this.readyTimeout = setTimeout(() => {
 			this.readyTimeout = undefined;
-			this.status = Status.Ready;
+			this.status = WebSocketStatus.Ready;
 			this.emit(WebSocketEvents.Ready, this.expectedGuilds);
 		}, 15_000);
 	}
@@ -351,7 +348,7 @@ export class WebSocketClient extends events.EventEmitter {
 			throw new Exception('TOKEN_MISSING');
 		}
 
-		this.status = Status.Identifying;
+		this.status = WebSocketStatus.Identifying;
 
 		this.send({
 			op: GatewayOPCodes.Identify,
@@ -379,7 +376,7 @@ export class WebSocketClient extends events.EventEmitter {
 			return;
 		}
 
-		this.status = Status.Resuming;
+		this.status = WebSocketStatus.Resuming;
 
 		this.send({
 			op: GatewayOPCodes.Resume,
@@ -458,7 +455,7 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		this.connection = undefined;
-		this.status = Status.Disconnected;
+		this.status = WebSocketStatus.Disconnected;
 
 		if (this.sequence !== -1) {
 			this.closeSequence = this.sequence;

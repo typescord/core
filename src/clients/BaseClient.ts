@@ -3,7 +3,7 @@
 import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
 import { HttpManager, HttpOptions } from '../http';
-import { DeepPartial } from '../utils';
+import { DeepPartial } from '../utils/types';
 
 export type TokenType = 'Bot' | 'Bearer';
 

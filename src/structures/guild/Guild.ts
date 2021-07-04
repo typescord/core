@@ -1,5 +1,5 @@
 import Collection from '@discordjs/collection';
-import {
+import type {
 	APIGuild,
 	APIPartialGuild,
 	GatewayPresenceUpdate,
@@ -10,9 +10,8 @@ import {
 	GuildPremiumTier,
 	GuildSystemChannelFlags,
 	GuildVerificationLevel,
-	Snowflake,
-} from 'discord-api-types';
-import { Client } from '../../clients';
+} from 'discord-api-types/v8';
+import { Client, Snowflake } from '../..';
 import { getTimestamp } from '../../utils/snowflake';
 import { GuildChannel } from '../channel/GuildChannel';
 import { GuildEmoji } from '../emoji/GuildEmoji';

@@ -1,5 +1,5 @@
-import { APIApplicationCommandInteraction, InteractionType, Snowflake } from 'discord-api-types';
-import { Client } from '../../clients';
+import { APIApplicationCommandInteraction, InteractionType } from 'discord-api-types/v8';
+import type { Client, Snowflake } from '../..';
 import { getTimestamp } from '../../utils/snowflake';
 import { GuildMember } from '../guild/GuildMember';
 import { User } from '../User';

@@ -1,6 +1,6 @@
 import Collection from '@discordjs/collection';
-import { APITeam, Snowflake } from 'discord-api-types';
-import { Client } from '../../clients';
+import type { APITeam } from 'discord-api-types/v8';
+import type { Snowflake, Client } from '../..';
 import { getTimestamp } from '../../utils/snowflake';
 import { TeamMember } from './TeamMember';
 

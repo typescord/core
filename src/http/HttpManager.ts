@@ -2,16 +2,12 @@
 import { Agent as HttpsAgent } from 'https';
 import { Readable } from 'stream';
 import Collection from '@discordjs/collection';
-import { APIVersion, RouteBases } from 'discord-api-types';
+import { APIVersion, RouteBases } from 'discord-api-types/v8';
 import FormData from 'form-data';
 import got, { Got, Headers, OptionsOfUnknownResponseBody } from 'got/dist/source';
 import { Agent as Http2Agent } from 'http2-wrapper';
-import { UserAgent } from '../constants';
-import { Exception } from '../exceptions';
-import type { BaseClient } from '../clients/BaseClient';
+import { UserAgent, Exception, BaseClient, StaticRoute, DynamicRoute, RouteType, RequestHandler } from '..';
 import { getTimestamp } from '../utils/snowflake';
-import type { StaticRoute, DynamicRoute, RouteType } from './routing';
-import { RequestHandler } from './RequestHandler';
 
 export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
