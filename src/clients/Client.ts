@@ -2,8 +2,8 @@ import EventEmitter from 'events';
 import type { GatewayReceivePayload } from 'discord-api-types/gateway/v8';
 import merge from 'lodash.merge';
 import { Snowflake, HttpOptions, GatewayException, Events, WebSocketManager } from '..';
-import { BaseClient } from './BaseClient';
 import type { DeepRequired } from '../utils/types';
+import { BaseClient } from './BaseClient';
 
 interface ClientEvents extends Record<Events, readonly unknown[]> {
 	raw: [GatewayReceivePayload];
