@@ -119,7 +119,7 @@ export class WebSocketManager extends EventEmitter {
 			await this.webSocketClient!.connect();
 		} catch (error) {
 			if (error && UNRECOVERABLE_CLOSE_CODES.has(error.closeCode)) {
-				throw new Exception(WEBSOCKET_CODES[error as keyof typeof WEBSOCKET_CODES]);
+				throw new Exception(WEBSOCKET_CODES[error.closeCode as keyof typeof WEBSOCKET_CODES]);
 			} else if (!error || error.closeCode) {
 				this.reconnect();
 			} else {
