@@ -1,4 +1,4 @@
-import { APIAttachment, Snowflake } from 'discord-api-types';
+import type { APIAttachment, Snowflake } from 'discord-api-types/v8';
 
 export class MessageAttachment {
 	public id!: Snowflake;

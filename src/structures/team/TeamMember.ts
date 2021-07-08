@@ -1,4 +1,5 @@
-import { APITeamMember, Snowflake, TeamMemberMembershipState } from 'discord-api-types';
+import type { APITeamMember, TeamMemberMembershipState } from 'discord-api-types/v8';
+import type { Snowflake } from '../..';
 import { User } from '../User';
 import { Team } from './Team';
 

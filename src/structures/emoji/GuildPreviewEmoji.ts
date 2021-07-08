@@ -1,4 +1,4 @@
-import { Snowflake } from 'discord-api-types';
+import type { Snowflake } from 'discord-api-types/v8';
 import { BaseGuildEmoji } from './BaseGuildEmoji';
 
 export class GuildPreviewEmoji extends BaseGuildEmoji {

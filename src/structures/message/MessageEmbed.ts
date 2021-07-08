@@ -1,4 +1,4 @@
-import { APIEmbed, EmbedType } from 'discord-api-types';
+import type { APIEmbed, EmbedType } from 'discord-api-types/v8';
 
 interface EmbedThumbnail {
 	url?: string;

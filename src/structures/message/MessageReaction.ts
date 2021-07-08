@@ -1,4 +1,4 @@
-import { APIReaction } from 'discord-api-types';
+import type { APIReaction } from 'discord-api-types';
 import { Emoji } from '../emoji/Emoji';
 import { Message } from './Message';
 

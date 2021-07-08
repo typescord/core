@@ -1,4 +1,4 @@
-import { APIEmoji } from 'discord-api-types';
+import type { APIEmoji } from 'discord-api-types/v8';
 import { User } from '../User';
 import { BaseGuildEmoji } from './BaseGuildEmoji';
 

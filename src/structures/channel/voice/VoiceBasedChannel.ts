@@ -1,4 +1,4 @@
-import { APIChannel, VideoQualityMode } from 'discord-api-types';
+import type { APIChannel, VideoQualityMode } from 'discord-api-types/v8';
 import { GuildChannel } from '../GuildChannel';
 
 export class VoiceBasedChannel extends GuildChannel {

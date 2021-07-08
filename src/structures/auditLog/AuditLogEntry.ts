@@ -1,5 +1,6 @@
-import { APIAuditLogChange, APIAuditLogEntry, AuditLogEvent, AuditLogOptionsType, Snowflake } from 'discord-api-types';
-import { deconstruct } from '../../utils/Snowflake';
+import type { APIAuditLogChange, APIAuditLogEntry, AuditLogEvent, AuditLogOptionsType } from 'discord-api-types/v8';
+import { Snowflake } from '../..';
+import { getTimestamp } from '../../utils/snowflake';
 import { AuditLog } from './AuditLog';
 
 interface AuditLogOptions {
@@ -46,7 +47,7 @@ export class AuditLogEntry {
 		this.actionType = data.action_type;
 		this.options = data.options;
 		this.reason = data.reason;
-		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdTimestamp = getTimestamp(this.id);
 		this.createdAt = new Date(this.createdTimestamp);
 	}
 }

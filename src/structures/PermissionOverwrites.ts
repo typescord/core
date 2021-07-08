@@ -1,4 +1,5 @@
-import { APIOverwrite, OverwriteType, Permissions, Snowflake } from 'discord-api-types';
+import type { APIOverwrite, OverwriteType, Permissions } from 'discord-api-types/v8';
+import { Snowflake } from '..';
 import { GuildChannel } from './channel/GuildChannel';
 
 export class PermissionOverwrites {

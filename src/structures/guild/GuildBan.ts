@@ -1,4 +1,4 @@
-import { APIBan } from 'discord-api-types';
+import type { APIBan } from 'discord-api-types/v8';
 import { User } from '../User';
 import { Guild } from './Guild';
 

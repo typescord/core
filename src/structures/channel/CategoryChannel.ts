@@ -1,5 +1,5 @@
 import Collection from '@discordjs/collection';
-import { Snowflake } from 'discord-api-types';
+import { Snowflake } from '../..';
 import { GuildChannel } from './GuildChannel';
 
 export class CategoryChannel extends GuildChannel {

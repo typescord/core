@@ -1,4 +1,4 @@
-import { APIExtendedInvite, InviteTargetType } from 'discord-api-types';
+import type { APIExtendedInvite, InviteTargetType } from 'discord-api-types/v8';
 import { Client } from '../clients';
 import { Application } from './Application';
 import { GuildChannel } from './channel/GuildChannel';

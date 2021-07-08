@@ -1,13 +1,10 @@
 import EventEmitter from 'events';
+import { setTimeout as wait } from 'timers/promises';
 import { GatewayDispatchEvents, GatewayReceivePayload } from 'discord-api-types/gateway/v8';
-import { Snowflake } from 'discord-api-types';
-import { Client } from '../clients';
-import { Exception, GatewayException } from '../exceptions';
-import { getGatewayBot } from '../http/routes';
-import { Events } from './Events';
-import { WebSocketClient, WebSocketEvents } from './WebSocketClient';
+import { Snowflake, Client, Exception, GatewayException, Events, WebSocketClient, WebSocketEvents } from '..';
+import { gatewayBot } from '../http/routes';
 
-export const enum Status {
+export const enum WebSocketStatus {
 	Ready,
 	Connecting,
 	Reconnecting,
@@ -42,7 +39,7 @@ const UNRESUMABLE_CLOSE_CODES = new Set([1000, 4006, 4007]);
 export class WebSocketManager extends EventEmitter {
 	private webSocketClient?: WebSocketClient;
 	private packetQueue: GatewayReceivePayload[] = [];
-	private status = Status.Idle;
+	private status = WebSocketStatus.Idle;
 	private reconnecting = false;
 	public destroyed = false;
 	public gatewayUrl?: string;
@@ -56,7 +53,7 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	public async connect(): Promise<void> {
-		const gateway = await this.client.$request('get', getGatewayBot).catch((error) => {
+		const gateway = await this.client.$request(gatewayBot, 'get').catch((error) => {
 			throw error.httpStatus === 401 ? new Exception('TOKEN_INVALID') : error;
 		});
 
@@ -73,11 +70,11 @@ export class WebSocketManager extends EventEmitter {
 				this.client.emit(Events.GatewayReady, unavailableGuilds);
 				this.reconnecting = false;
 
-				if (this.status === Status.Ready) {
+				if (this.status === WebSocketStatus.Ready) {
 					return;
 				}
 
-				this.status = Status.Ready;
+				this.status = WebSocketStatus.Ready;
 				this.client.emit(Events.ClientReady);
 
 				this.handlePacket();
@@ -129,7 +126,7 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	private async reconnect(): Promise<void> {
-		if (this.reconnecting || this.status !== Status.Ready) {
+		if (this.reconnecting || this.status !== WebSocketStatus.Ready) {
 			return;
 		}
 
@@ -139,7 +136,7 @@ export class WebSocketManager extends EventEmitter {
 			await this.createClient();
 		} catch (error) {
 			if (error.httpStatus !== 401) {
-				await new Promise((resolve) => this.client.setTimeout(resolve, 5000));
+				await wait(5000);
 				this.reconnecting = false;
 				return this.reconnect();
 			}
@@ -160,7 +157,7 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	public handlePacket(packet?: GatewayReceivePayload): void {
-		if (packet && this.status !== Status.Ready && 't' in packet && !BeforeReadyWhitelist.has(packet.t)) {
+		if (packet && this.status !== WebSocketStatus.Ready && 't' in packet && !BeforeReadyWhitelist.has(packet.t)) {
 			this.packetQueue.push(packet);
 			return;
 		}

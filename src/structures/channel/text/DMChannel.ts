@@ -1,5 +1,6 @@
 import Collection from '@discordjs/collection';
-import { APIChannel, Snowflake } from 'discord-api-types';
+import type { APIChannel } from 'discord-api-types/v8';
+import type { Snowflake } from '../../..';
 import { Channel } from '../Channel';
 import { User } from '../../User';
 import { TextBasedChannel } from './TextBasedChannel';

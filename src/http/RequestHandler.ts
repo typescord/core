@@ -1,7 +1,7 @@
-import { HTTPError, OptionsOfUnknownResponseBody, RequestError, Response, TimeoutError } from 'got';
+import { setTimeout as wait } from 'timers/promises';
+import { HTTPError, OptionsOfUnknownResponseBody, RequestError, TimeoutError } from 'got';
 import { Queue } from './Queue';
 import { HttpManager } from './HttpManager';
-import { DynamicRoute } from './routing';
 
 const RETRIES_STATUS_CODE = new Set([408, 500, 502, 503, 504, 521, 522, 524]);
 const RETRIES_ERROR_CODE = new Set([
@@ -15,15 +15,9 @@ const RETRIES_ERROR_CODE = new Set([
 	'EAI_AGAIN',
 ]);
 
-function parseResponse(response: Response<unknown>): Record<PropertyKey, unknown> | Buffer {
-	if (response.headers['content-type']?.startsWith('application/json')) {
-		return JSON.parse(response.rawBody.toString());
-	}
-	return response.rawBody;
-}
-
 export class RequestHandler {
 	private readonly queue = new Queue();
+	public readonly id: string;
 	private remaining = 1;
 	private reset = -1;
 
@@ -31,37 +25,25 @@ export class RequestHandler {
 		private readonly manager: HttpManager,
 		private readonly hash: string,
 		private readonly bucketRoute: string,
-		public readonly id: `${DynamicRoute['majorParameter']}:${string}`,
-	) {}
-
-	public get localLimited(): boolean {
-		return this.remaining <= 0 && Date.now() < this.reset;
-	}
-
-	public get globalLimited(): boolean {
-		return Date.now() < this.manager.reset;
+		majorParameter: string,
+	) {
+		this.id = `${hash}:${majorParameter}`;
 	}
 
 	public get limited(): boolean {
-		return this.globalLimited || this.localLimited;
+		return Date.now() < this.manager.reset || (this.remaining <= 0 && Date.now() < this.reset);
 	}
 
 	public get inactive(): boolean {
 		return this.queue.length === 0 && !this.limited;
 	}
 
-	private wait(ms: number): Promise<void> {
-		return new Promise((resolve) => this.manager.client.setTimeout(resolve, ms));
-	}
-
 	public async push(dotOptions: OptionsOfUnknownResponseBody): Promise<Record<PropertyKey, unknown> | Buffer> {
 		await this.queue.wait();
 		try {
-			if (this.manager.delay) {
-				await this.manager.delay;
-			}
+			await this.manager.delay;
 			if (this.limited) {
-				await this.wait(this.reset - Date.now());
+				await wait(this.reset - Date.now());
 			}
 			// eslint-disable-next-line @typescript-eslint/return-await
 			return await this.execute(dotOptions);
@@ -95,16 +77,21 @@ export class RequestHandler {
 			const retryAfter = retry ? Number(retry) * 1000 : 0;
 
 			if (response.headers['x-ratelimit-global']) {
-				this.manager.delay = this.wait(retryAfter + offset).then(() => (this.manager.delay = undefined));
+				this.manager.delay = wait(retryAfter + offset);
 			}
 
 			if (response.statusCode === 429) {
-				await this.wait(retryAfter);
+				await wait(retryAfter);
 				return this.execute(dotOptions);
 			}
 
-			return parseResponse(response);
+			if (response.headers['content-type']?.startsWith('application/json')) {
+				return JSON.parse(response.rawBody.toString());
+			}
+
+			return response.rawBody;
 		} catch (error) {
+			// TODO: simplify this
 			if (
 				retries < this.manager.options.retryLimit &&
 				(error instanceof TimeoutError ||

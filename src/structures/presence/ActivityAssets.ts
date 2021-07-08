@@ -1,4 +1,4 @@
-import { GatewayActivityAssets } from 'discord-api-types';
+import { GatewayActivityAssets } from 'discord-api-types/v8';
 import { Activity } from './Activity';
 
 export class ActivityAssets {

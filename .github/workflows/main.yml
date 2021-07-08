@@ -24,8 +24,8 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      - name: Test
-        run: yarn test --detectOpenHandles --forceExit
+      # - name: Test
+      #   run: yarn test --detectOpenHandles --forceExit
 
       - name: Build
         run: yarn build --noEmit

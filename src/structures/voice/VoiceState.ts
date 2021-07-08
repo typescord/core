@@ -1,4 +1,5 @@
-import { GatewayVoiceState, Snowflake } from 'discord-api-types';
+import type { GatewayVoiceState } from 'discord-api-types/v8';
+import type { Snowflake } from '../..';
 import { StageChannel } from '../channel/voice/StageChannel';
 import { VoiceChannel } from '../channel/voice/VoiceChannel';
 import { Guild } from '../guild/Guild';

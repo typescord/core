@@ -2,9 +2,8 @@ import Collection from '@discordjs/collection';
 import {
 	APIApplicationCommandGuildInteraction,
 	APIApplicationCommandInteractionDataOption,
-	Snowflake,
-} from 'discord-api-types';
-import { Client } from '../../clients';
+} from 'discord-api-types/v8';
+import type { Client, Snowflake } from '../..';
 import { GuildChannel } from '../channel/GuildChannel';
 import { GuildMember } from '../guild/GuildMember';
 import { Role } from '../Role';
@@ -12,7 +11,6 @@ import { User } from '../User';
 import { Interaction } from './Interaction';
 
 export class CommandInteraction extends Interaction {
-	public id!: Snowflake;
 	public name!: string;
 	public options?: APIApplicationCommandInteractionDataOption[];
 	public users = new Collection<Snowflake, User>();

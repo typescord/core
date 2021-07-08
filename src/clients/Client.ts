@@ -1,11 +1,8 @@
 import EventEmitter from 'events';
 import type { GatewayReceivePayload } from 'discord-api-types/gateway/v8';
-import { Snowflake } from 'discord-api-types';
 import merge from 'lodash.merge';
-import { Events, WebSocketManager } from '../gateway';
-import type { HttpOptions } from '../http';
-import type { DeepRequired } from '../utils';
-import { GatewayException } from '../exceptions';
+import { Snowflake, HttpOptions, GatewayException, Events, WebSocketManager } from '..';
+import type { DeepRequired } from '../utils/types';
 import { BaseClient } from './BaseClient';
 
 interface ClientEvents extends Record<Events, readonly unknown[]> {
@@ -58,14 +55,15 @@ interface ClientOptions {
 	 */
 	http?: HttpOptions;
 	/**
+	 * Enabled gateway intents for this connection.
+	 * https://discord.com/developers/docs/topics/gateway#gateway-intents
+	 * @default 513
+	 */
+	intents?: number;
+	/**
 	 * WebSocket options
 	 */
 	ws?: {
-		/**
-		 * Discord's gateway version.
-		 * @default 8
-		 */
-		version?: 7 | 8;
 		/**
 		 * If the Gateway should send zlib-compressed payloads.
 		 * In this case, the client will inflate theses payloads.
@@ -79,12 +77,6 @@ interface ClientOptions {
 		 * @default 50
 		 */
 		largeThreshold?: number;
-		/**
-		 * Enabled gateway intents for this connection.
-		 * https://discord.com/developers/docs/topics/gateway#gateway-intents
-		 * @default 513
-		 */
-		intents?: number;
 		/**
 		 * The hello timeout, in milliseconds.
 		 * Destroys the Client if the Hello packet
@@ -114,11 +106,10 @@ interface ClientOptions {
 }
 
 const defaultOptions: DeepRequired<Omit<ClientOptions, 'http'>> = {
+	intents: 513,
 	ws: {
-		version: 8,
 		compress: false,
 		largeThreshold: 50,
-		intents: 513,
 		helloTimeout: 20_000,
 		rateLimit: {
 			limit: 120,

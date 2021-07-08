@@ -1,4 +1,5 @@
-import { APIGuildPreview, GuildFeature, Snowflake } from 'discord-api-types';
+import type { APIGuildPreview, GuildFeature } from 'discord-api-types';
+import type { Snowflake } from '../..';
 import { Client } from '../../clients';
 import { GuildPreviewEmoji } from '../emoji/GuildPreviewEmoji';
 

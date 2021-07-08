@@ -1,6 +1,6 @@
-import { APIWebhook, Snowflake, WebhookType } from 'discord-api-types';
-import { Client } from '../clients';
-import { deconstruct } from '../utils/Snowflake';
+import type { APIWebhook, WebhookType } from 'discord-api-types/v8';
+import type { Client, Snowflake } from '..';
+import { getTimestamp } from '../utils/snowflake';
 import { TextChannel } from './channel/text/TextChannel';
 import { Guild } from './guild/Guild';
 import { User } from './User';
@@ -18,8 +18,8 @@ export class Webhook {
 	public sourceGuild?: Guild;
 	public sourceChannel?: TextChannel;
 	public url?: string;
-	public createdTimestamp?: number;
-	public createdAt?: Date;
+	public createdTimestamp!: number;
+	public createdAt!: Date;
 
 	public constructor(public readonly client: Client, data: APIWebhook) {
 		this.$patch(data);
@@ -39,7 +39,7 @@ export class Webhook {
 		this.sourceChannel =
 			this.sourceGuild && data.source_channel && new TextChannel(this.sourceGuild, data.source_channel);
 		this.url = data.url;
-		this.createdTimestamp = deconstruct(this.id)?.timestamp;
-		this.createdAt = this.createdTimestamp ? new Date(this.createdTimestamp) : undefined;
+		this.createdTimestamp = getTimestamp(this.id);
+		this.createdAt = new Date(this.createdTimestamp);
 	}
 }

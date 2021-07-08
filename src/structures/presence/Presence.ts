@@ -1,5 +1,5 @@
-import { GatewayPresenceUpdate, PresenceUpdateStatus, Snowflake } from 'discord-api-types';
-import { Client } from '../../clients';
+import type { GatewayPresenceUpdate, PresenceUpdateStatus } from 'discord-api-types/v8';
+import type { Client, Snowflake } from '../..';
 import { Activity } from './Activity';
 
 interface PresenceClientStatus {
