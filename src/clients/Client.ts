@@ -55,14 +55,15 @@ interface ClientOptions {
 	 */
 	http?: HttpOptions;
 	/**
+	 * Enabled gateway intents for this connection.
+	 * https://discord.com/developers/docs/topics/gateway#gateway-intents
+	 * @default 513
+	 */
+	intents?: number;
+	/**
 	 * WebSocket options
 	 */
 	ws?: {
-		/**
-		 * Discord's gateway version.
-		 * @default 8
-		 */
-		version?: 7 | 8;
 		/**
 		 * If the Gateway should send zlib-compressed payloads.
 		 * In this case, the client will inflate theses payloads.
@@ -76,12 +77,6 @@ interface ClientOptions {
 		 * @default 50
 		 */
 		largeThreshold?: number;
-		/**
-		 * Enabled gateway intents for this connection.
-		 * https://discord.com/developers/docs/topics/gateway#gateway-intents
-		 * @default 513
-		 */
-		intents?: number;
 		/**
 		 * The hello timeout, in milliseconds.
 		 * Destroys the Client if the Hello packet
@@ -111,11 +106,10 @@ interface ClientOptions {
 }
 
 const defaultOptions: DeepRequired<Omit<ClientOptions, 'http'>> = {
+	intents: 513,
 	ws: {
-		version: 8,
 		compress: false,
 		largeThreshold: 50,
-		intents: 513,
 		helloTimeout: 20_000,
 		rateLimit: {
 			limit: 120,

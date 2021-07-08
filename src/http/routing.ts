@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Method } from './HttpManager';
+
+export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 export type RouteType = {
 	[K in Method]?: {

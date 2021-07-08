@@ -53,7 +53,7 @@ export class WebSocketManager extends EventEmitter {
 	}
 
 	public async connect(): Promise<void> {
-		const gateway = await this.client.$request('get', gatewayBot).catch((error) => {
+		const gateway = await this.client.$request(gatewayBot, 'get').catch((error) => {
 			throw error.httpStatus === 401 ? new Exception('TOKEN_INVALID') : error;
 		});
 

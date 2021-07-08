@@ -2,14 +2,12 @@
 import { Agent as HttpsAgent } from 'https';
 import { Readable } from 'stream';
 import Collection from '@discordjs/collection';
-import { APIVersion, RouteBases } from 'discord-api-types/v8';
+import { APIVersion } from 'discord-api-types/v8';
 import FormData from 'form-data';
 import got, { Got, Headers, OptionsOfUnknownResponseBody } from 'got/dist/source';
 import { Agent as Http2Agent } from 'http2-wrapper';
 import { UserAgent, Exception, BaseClient, StaticRoute, DynamicRoute, RouteType, RequestHandler } from '..';
 import { getTimestamp } from '../utils/snowflake';
-
-export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 export interface RequestPayload {
 	/**
@@ -69,6 +67,31 @@ export interface HttpOptions {
 	 * @default true
 	 */
 	http2: boolean;
+	/**
+	 * Discord's API base URL.
+	 * @default 'https://discord.com/api'
+	 */
+	apiUrl: string;
+	/**
+	 * Discord's CDN base URL.
+	 * @default 'https://cdn.discordapp.com'
+	 */
+	cdnUrl: string;
+	/**
+	 * Discord's Invite base URL.
+	 * @default 'https://discord.gg'
+	 */
+	inviteUrl: string;
+	/**
+	 * Discord's Template base URL.
+	 * @default 'https://discord.new'
+	 */
+	templateUrl: string;
+	/**
+	 * Discord's Gift base URL.
+	 * @default 'https://discord.gift'
+	 */
+	giftUrl: string;
 }
 
 type Payload<T extends RouteType[keyof RouteType]> = {
@@ -91,7 +114,7 @@ export class HttpManager {
 		}
 
 		this.dot = got.extend({
-			prefixUrl: `${RouteBases.api}/v${APIVersion}`,
+			prefixUrl: `${this.options.apiUrl}/v${APIVersion}`,
 			timeout: this.options.requestTimeout,
 			http2: this.options.http2,
 			agent: this.options.http2 ? { http2: new Http2Agent() } : { https: new HttpsAgent({ keepAlive: true }) },
@@ -111,22 +134,22 @@ export class HttpManager {
 	}
 
 	public request<
-		M extends T extends StaticRoute<infer R> | DynamicRoute<infer R> ? keyof R : never,
 		T extends StaticRoute | DynamicRoute,
+		M extends T extends StaticRoute<infer R> | DynamicRoute<infer R> ? keyof R : never,
 		R = T extends StaticRoute<infer D> | DynamicRoute<infer D> ? D[M] : never,
 	>(
-		method: M,
 		route: T,
+		method: M,
 		...args: keyof Payload<R> extends never
 			? [payload?: undefined, options?: RequestOptions]
 			: [payload: Payload<R>, options?: RequestOptions]
 	): Promise<'r' extends keyof R ? R['r'] : void>;
 	public request<
-		M extends T extends StaticRoute<infer R> | DynamicRoute<infer R> ? keyof R : never,
 		T extends StaticRoute | DynamicRoute,
+		M extends T extends StaticRoute<infer R> | DynamicRoute<infer R> ? keyof R : never,
 	>(
-		method: M,
 		route: T,
+		method: M,
 		payload?: RequestPayload,
 		options?: RequestOptions,
 	): T extends StaticRoute<infer R> | DynamicRoute<infer R>

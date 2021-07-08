@@ -2,6 +2,7 @@
 
 import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
+import { RouteBases } from 'discord-api-types/v8';
 import { HttpManager, HttpOptions } from '../http';
 import { DeepPartial } from '../utils/types';
 
@@ -13,6 +14,11 @@ const defaultOptions: HttpOptions = {
 	retryLimit: 2,
 	timeOffset: 0,
 	http2: true,
+	apiUrl: RouteBases.api,
+	cdnUrl: RouteBases.cdn,
+	inviteUrl: RouteBases.invite,
+	templateUrl: RouteBases.template,
+	giftUrl: RouteBases.gift,
 };
 
 export class BaseClient extends EventEmitter {

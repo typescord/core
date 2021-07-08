@@ -3,6 +3,7 @@ import { encode } from 'querystring';
 import { Inflate, constants, createInflate } from 'zlib';
 import WebSocket from 'ws';
 import {
+	GatewayVersion,
 	GatewayDispatchEvents,
 	GatewayOPCodes,
 	GatewayReceivePayload,
@@ -19,8 +20,6 @@ try {
 
 const ZLIB_SUFFIX = 0xff_ff;
 
-const encoding = erlpack ? 'etf' : 'json';
-
 export const enum WebSocketEvents {
 	Close = 'close',
 	Destroyed = 'destroyed',
@@ -30,14 +29,15 @@ export const enum WebSocketEvents {
 }
 
 type GatewayUrlQuery = {
-	v: 7 | 8;
+	v: typeof GatewayVersion;
 	encoding?: typeof encoding;
 	compress?: 'zlib-stream';
 };
 
+export const encoding = erlpack ? 'etf' : 'json';
+
 const pack = erlpack ? erlpack.pack : JSON.stringify;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const unpack: (data: Buffer) => any = erlpack ? erlpack.unpack : (data: Buffer) => JSON.parse(data.toString('utf8'));
+const unpack = erlpack ? erlpack.unpack : JSON.parse;
 
 interface NodeEventTarget {
 	once(event: string | symbol, listener: (...args: unknown[]) => void): this;
@@ -105,7 +105,7 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		const gatewayOptions: GatewayUrlQuery = {
-			v: this.client.options.ws.version,
+			v: GatewayVersion,
 			encoding,
 		};
 
@@ -156,8 +156,12 @@ export class WebSocketClient extends events.EventEmitter {
 				return;
 			}
 
-			packet = await new Promise((resolve) => this.inflate!.flush(() => resolve(Buffer.concat(this.chunks!))));
-			this.chunks = [];
+			packet = await new Promise((resolve) => {
+				this.inflate!.flush(() => {
+					resolve(Buffer.concat(this.chunks!));
+					this.chunks = [];
+				});
+			});
 
 			// If an error occurs during inflation, packet will be empty.
 			// Inflation errors are already handled.
@@ -167,8 +171,8 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		try {
-			// this assertion is false.
-			this.onPacket(unpack(packet as Buffer));
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			this.onPacket(unpack(packet as any));
 		} catch (error) {
 			this.client.emit(Events.GatewayError, error);
 		}
@@ -361,7 +365,7 @@ export class WebSocketClient extends events.EventEmitter {
 				compress: this.compress,
 				large_threshold: this.client.options.ws.largeThreshold,
 				token: this.client.token,
-				intents: this.client.options.ws.intents,
+				intents: this.client.options.intents,
 			},
 		});
 	}
@@ -410,7 +414,7 @@ export class WebSocketClient extends events.EventEmitter {
 			}, this.rateLimit.time);
 		}
 
-		while (this.rateLimit.remaining > 0) {
+		for (; this.rateLimit.remaining > 0; this.rateLimit.remaining--) {
 			const item = this.rateLimit.queue.shift();
 			if (!item) {
 				return;
@@ -422,7 +426,6 @@ export class WebSocketClient extends events.EventEmitter {
 			}
 
 			this.connection.send(pack(item), (error) => error && this.client.emit(Events.GatewayError, error));
-			this.rateLimit.remaining--;
 		}
 	}
 
