@@ -1,4 +1,4 @@
-import { APIChannel } from 'discord-api-types';
+import type { APIChannel } from 'discord-api-types/v8';
 import { GuildChannel } from '../GuildChannel';
 import { TextBasedChannel } from './TextBasedChannel';
 

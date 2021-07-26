@@ -1,4 +1,4 @@
-import { APIVoiceRegion } from 'discord-api-types';
+import type { APIVoiceRegion } from 'discord-api-types/v8';
 
 export class VoiceRegion {
 	public id!: string;

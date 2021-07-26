@@ -1,5 +1,6 @@
 import Collection from '@discordjs/collection';
-import { APIAuditLog, Snowflake } from 'discord-api-types';
+import type { APIAuditLog } from 'discord-api-types/v8';
+import type { Snowflake } from '../..';
 import { Guild } from '../guild/Guild';
 import { GuildIntegration } from '../guild/GuildIntegration';
 import { User } from '../User';

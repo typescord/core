@@ -1,4 +1,5 @@
-import { APIEmoji, Snowflake } from 'discord-api-types';
+import type { APIEmoji } from 'discord-api-types/v8';
+import type { Snowflake } from '../..';
 import { Emoji } from '../emoji/Emoji';
 import { Guild } from '../guild/Guild';
 import { GuildPreview } from '../guild/GuildPreview';

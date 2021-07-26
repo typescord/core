@@ -1,6 +1,6 @@
-import { APIChannel, ChannelType, Snowflake } from 'discord-api-types';
-import { Client } from '../../clients';
-import { deconstruct } from '../../utils/Snowflake';
+import type { APIChannel, ChannelType } from 'discord-api-types/v8';
+import { Client, Snowflake } from '../..';
+import { getTimestamp } from '../../utils/snowflake';
 
 export class Channel {
 	public id!: Snowflake;
@@ -15,7 +15,7 @@ export class Channel {
 	public $patch(data: APIChannel): void {
 		this.id = data.id;
 		this.type = data.type;
-		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdTimestamp = getTimestamp(this.id);
 		this.createdAt = new Date(this.createdTimestamp);
 	}
 

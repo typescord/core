@@ -1,18 +1,15 @@
 import events from 'events';
 import { encode } from 'querystring';
 import { Inflate, constants, createInflate } from 'zlib';
+import WebSocket from 'ws';
 import {
+	GatewayVersion,
 	GatewayDispatchEvents,
 	GatewayOPCodes,
 	GatewayReceivePayload,
 	GatewaySendPayload,
-	Snowflake,
-} from 'discord-api-types';
-import WebSocket from 'ws';
-import { Client } from '../clients';
-import { Exception, GatewayException } from '../exceptions';
-import { Events } from './Events';
-import { Status, WebSocketManager } from './WebSocketManager';
+} from 'discord-api-types/gateway/v8';
+import { Client, Exception, GatewayException, Events, WebSocketStatus, WebSocketManager, Snowflake } from '..';
 
 let erlpack: typeof import('@typescord/erlpack') | undefined;
 try {
@@ -23,8 +20,6 @@ try {
 
 const ZLIB_SUFFIX = 0xff_ff;
 
-const encoding = erlpack ? 'etf' : 'json';
-
 export const enum WebSocketEvents {
 	Close = 'close',
 	Destroyed = 'destroyed',
@@ -34,14 +29,15 @@ export const enum WebSocketEvents {
 }
 
 type GatewayUrlQuery = {
-	v: 7 | 8;
+	v: typeof GatewayVersion;
 	encoding?: typeof encoding;
 	compress?: 'zlib-stream';
 };
 
+export const encoding = erlpack ? 'etf' : 'json';
+
 const pack = erlpack ? erlpack.pack : JSON.stringify;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const unpack: (data: Buffer) => any = erlpack ? erlpack.unpack : (data: Buffer) => JSON.parse(data.toString('utf8'));
+const unpack = erlpack ? erlpack.unpack : JSON.parse;
 
 interface NodeEventTarget {
 	once(event: string | symbol, listener: (...args: unknown[]) => void): this;
@@ -83,7 +79,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 	public readonly client: Client;
 	public ping = -1;
-	public status = Status.Idle;
+	public status = WebSocketStatus.Idle;
 	public eventsAttached = false;
 	public sessionId?: string;
 	public connectedAt?: number;
@@ -101,7 +97,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 	public async connect(): Promise<void> {
 		if (this.connection?.readyState === WebSocket.OPEN) {
-			return this.status === Status.Ready ? undefined : this.identify();
+			return this.status === WebSocketStatus.Ready ? undefined : this.identify();
 		}
 
 		if (this.connection) {
@@ -109,7 +105,7 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		const gatewayOptions: GatewayUrlQuery = {
-			v: this.client.options.ws.version,
+			v: GatewayVersion,
 			encoding,
 		};
 
@@ -121,7 +117,8 @@ export class WebSocketClient extends events.EventEmitter {
 			gatewayOptions.compress = 'zlib-stream';
 		}
 
-		this.status = this.status === Status.Disconnected ? Status.Reconnecting : Status.Connecting;
+		this.status =
+			this.status === WebSocketStatus.Disconnected ? WebSocketStatus.Reconnecting : WebSocketStatus.Connecting;
 		// reset hello timeout
 		this.updateHelloTimeout(true);
 
@@ -146,7 +143,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 	private onOpen(): void {
 		this.connectedAt = Date.now();
-		this.status = Status.Nearly;
+		this.status = WebSocketStatus.Nearly;
 	}
 
 	private async onMessage(data: string | Buffer): Promise<void> {
@@ -159,8 +156,12 @@ export class WebSocketClient extends events.EventEmitter {
 				return;
 			}
 
-			packet = await new Promise((resolve) => this.inflate!.flush(() => resolve(Buffer.concat(this.chunks!))));
-			this.chunks = [];
+			packet = await new Promise((resolve) => {
+				this.inflate!.flush(() => {
+					resolve(Buffer.concat(this.chunks!));
+					this.chunks = [];
+				});
+			});
 
 			// If an error occurs during inflation, packet will be empty.
 			// Inflation errors are already handled.
@@ -170,8 +171,8 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		try {
-			// this assertion is false.
-			this.onPacket(unpack(packet as Buffer));
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			this.onPacket(unpack(packet as any));
 		} catch (error) {
 			this.client.emit(Events.GatewayError, error);
 		}
@@ -204,7 +205,7 @@ export class WebSocketClient extends events.EventEmitter {
 			this.cleanupConnection();
 		}
 
-		this.status = Status.Disconnected;
+		this.status = WebSocketStatus.Disconnected;
 		this.emit(WebSocketEvents.Close, new GatewayException(code, message));
 	}
 
@@ -217,14 +218,14 @@ export class WebSocketClient extends events.EventEmitter {
 
 				this.sessionId = packet.d.session_id;
 				this.expectedGuilds = new Set(packet.d.guilds.map((guild) => guild.id));
-				this.status = Status.WaitingForGuilds;
+				this.status = WebSocketStatus.WaitingForGuilds;
 				this.lastHeartbeatAcked = true;
 
 				this.sendHeartbeat();
 			} else if (packet.t === GatewayDispatchEvents.Resumed) {
 				this.emit(WebSocketEvents.Resumed);
 
-				this.status = Status.Ready;
+				this.status = WebSocketStatus.Ready;
 				this.lastHeartbeatAcked = true;
 
 				this.sendHeartbeat();
@@ -254,7 +255,7 @@ export class WebSocketClient extends events.EventEmitter {
 
 				this.sequence = -1;
 				this.sessionId = undefined;
-				this.status = Status.Reconnecting;
+				this.status = WebSocketStatus.Reconnecting;
 				this.emit(WebSocketEvents.InvalidSession);
 				break;
 
@@ -270,7 +271,7 @@ export class WebSocketClient extends events.EventEmitter {
 			default:
 				this.manager.handlePacket(packet);
 
-				if (this.status === Status.WaitingForGuilds && packet.t === GatewayDispatchEvents.GuildCreate) {
+				if (this.status === WebSocketStatus.WaitingForGuilds && packet.t === GatewayDispatchEvents.GuildCreate) {
 					this.expectedGuilds?.delete(packet.d.id);
 					this.checkReady();
 				}
@@ -279,19 +280,19 @@ export class WebSocketClient extends events.EventEmitter {
 
 	private checkReady() {
 		if (this.readyTimeout) {
-			this.client.clearTimeout(this.readyTimeout);
+			clearTimeout(this.readyTimeout);
 			this.readyTimeout = undefined;
 		}
 
 		if (!this.expectedGuilds?.size) {
-			this.status = Status.Ready;
+			this.status = WebSocketStatus.Ready;
 			this.emit(WebSocketEvents.Ready);
 			return;
 		}
 
-		this.readyTimeout = this.client.setTimeout(() => {
+		this.readyTimeout = setTimeout(() => {
 			this.readyTimeout = undefined;
-			this.status = Status.Ready;
+			this.status = WebSocketStatus.Ready;
 			this.emit(WebSocketEvents.Ready, this.expectedGuilds);
 		}, 15_000);
 	}
@@ -303,13 +304,13 @@ export class WebSocketClient extends events.EventEmitter {
 
 		if (reset) {
 			if (this.helloTimeout) {
-				this.client.clearTimeout(this.helloTimeout);
+				clearTimeout(this.helloTimeout);
 				this.helloTimeout = undefined;
 			}
 			return;
 		}
 
-		this.helloTimeout = this.client.setTimeout(() => {
+		this.helloTimeout = setTimeout(() => {
 			this.destroy({ reset: true, closeCode: 4009 });
 		}, this.client.options.ws.helloTimeout);
 	}
@@ -317,17 +318,17 @@ export class WebSocketClient extends events.EventEmitter {
 	private updateHeartbeatTimer(time: number) {
 		if (time === -1) {
 			if (this.heartbeatInterval) {
-				this.client.clearInterval(this.heartbeatInterval);
+				clearInterval(this.heartbeatInterval);
 				this.heartbeatInterval = undefined;
 			}
 			return;
 		}
 
 		if (this.heartbeatInterval) {
-			this.client.clearInterval(this.heartbeatInterval);
+			clearInterval(this.heartbeatInterval);
 		}
 
-		this.heartbeatInterval = this.client.setInterval(() => this.sendHeartbeat(), time);
+		this.heartbeatInterval = setInterval(() => this.sendHeartbeat(), time);
 	}
 
 	private sendHeartbeat(): void {
@@ -351,7 +352,7 @@ export class WebSocketClient extends events.EventEmitter {
 			throw new Exception('TOKEN_MISSING');
 		}
 
-		this.status = Status.Identifying;
+		this.status = WebSocketStatus.Identifying;
 
 		this.send({
 			op: GatewayOPCodes.Identify,
@@ -364,7 +365,7 @@ export class WebSocketClient extends events.EventEmitter {
 				compress: this.compress,
 				large_threshold: this.client.options.ws.largeThreshold,
 				token: this.client.token,
-				intents: this.client.options.ws.intents,
+				intents: this.client.options.intents,
 			},
 		});
 	}
@@ -379,7 +380,7 @@ export class WebSocketClient extends events.EventEmitter {
 			return;
 		}
 
-		this.status = Status.Resuming;
+		this.status = WebSocketStatus.Resuming;
 
 		this.send({
 			op: GatewayOPCodes.Resume,
@@ -407,13 +408,13 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		if (this.rateLimit.remaining === this.rateLimit.limit) {
-			this.rateLimit.timer = this.client.setTimeout(() => {
+			this.rateLimit.timer = setTimeout(() => {
 				this.rateLimit.remaining = this.rateLimit.limit;
 				this.processQueue();
 			}, this.rateLimit.time);
 		}
 
-		while (this.rateLimit.remaining > 0) {
+		for (; this.rateLimit.remaining > 0; this.rateLimit.remaining--) {
 			const item = this.rateLimit.queue.shift();
 			if (!item) {
 				return;
@@ -425,7 +426,6 @@ export class WebSocketClient extends events.EventEmitter {
 			}
 
 			this.connection.send(pack(item), (error) => error && this.client.emit(Events.GatewayError, error));
-			this.rateLimit.remaining--;
 		}
 	}
 
@@ -458,7 +458,7 @@ export class WebSocketClient extends events.EventEmitter {
 		}
 
 		this.connection = undefined;
-		this.status = Status.Disconnected;
+		this.status = WebSocketStatus.Disconnected;
 
 		if (this.sequence !== -1) {
 			this.closeSequence = this.sequence;
@@ -473,7 +473,7 @@ export class WebSocketClient extends events.EventEmitter {
 		this.rateLimit.queue = [];
 
 		if (this.rateLimit.timer) {
-			this.client.clearTimeout(this.rateLimit.timer);
+			clearTimeout(this.rateLimit.timer);
 			this.rateLimit.timer = undefined;
 		}
 	}

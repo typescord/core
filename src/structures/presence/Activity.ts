@@ -1,11 +1,11 @@
-import {
+import type {
 	ActivityFlags,
 	ActivityPlatform,
 	ActivityType,
 	APIPartialEmoji,
 	GatewayActivity,
-	Snowflake,
-} from 'discord-api-types';
+} from 'discord-api-types/v8';
+import type { Snowflake } from '../..';
 import { Emoji } from '../emoji/Emoji';
 import { ActivityAssets } from './ActivityAssets';
 import { Presence } from './Presence';

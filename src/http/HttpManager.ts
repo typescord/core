@@ -1,24 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Agent as HttpsAgent } from 'https';
-import type { ReadStream } from 'fs';
+import { Readable } from 'stream';
 import Collection from '@discordjs/collection';
-import { FormData } from '@typescord/famfor';
+import { APIVersion } from 'discord-api-types/v8';
+import FormData from 'form-data';
 import got, { Got, Headers, OptionsOfUnknownResponseBody } from 'got/dist/source';
 import { Agent as Http2Agent } from 'http2-wrapper';
-import { UserAgent } from '../constants';
-import { Exception } from '../exceptions';
-import type { BaseClient } from '../clients/BaseClient';
-import { Snowflake } from '../utils';
-import type { StaticRoute, DynamicRoute } from './routing';
-import { RequestHandler } from './RequestHandler';
-
-export type Method = 'get' | 'post' | 'put' | 'patch' | 'delete';
+import { UserAgent, Exception, BaseClient, StaticRoute, DynamicRoute, RouteType, RequestHandler } from '..';
+import { getTimestamp } from '../utils/snowflake';
 
 export interface RequestPayload {
 	/**
 	 * Attachments to send.
 	 */
-	attachments?: Record<string, string | Buffer | ReadStream>;
+	attachments?: Record<string, string | Buffer | Readable>;
 	/**
 	 * Query string parameters.
 	 */
@@ -45,9 +40,6 @@ export interface RequestOptions {
 	auth?: boolean;
 }
 
-type RoutePayload<E> = E extends StaticRoute<any, infer R> | DynamicRoute<any, infer R> ? R : void;
-type RouteResult<E> = E extends StaticRoute<infer R> | DynamicRoute<infer R> ? R : undefined;
-
 export interface HttpOptions {
 	/**
 	 * The timeout of http requests, in milliseconds.
@@ -72,40 +64,60 @@ export interface HttpOptions {
 	timeOffset: number;
 	/**
 	 * If HTTP/2 should be used instead of HTTP/1.1.
-	 * It will choose either HTTP/1.1 or HTTP/2 depending on the ALPN protocol.
-	 * @default false
+	 * @default true
 	 */
 	http2: boolean;
 	/**
-	 * The Discord API url.
-	 * @default 'https://discord.com/api/v8'
+	 * Discord's API base URL.
+	 * @default 'https://discord.com/api'
 	 */
-	api: string;
+	apiUrl: string;
+	/**
+	 * Discord's CDN base URL.
+	 * @default 'https://cdn.discordapp.com'
+	 */
+	cdnUrl: string;
+	/**
+	 * Discord's Invite base URL.
+	 * @default 'https://discord.gg'
+	 */
+	inviteUrl: string;
+	/**
+	 * Discord's Template base URL.
+	 * @default 'https://discord.new'
+	 */
+	templateUrl: string;
+	/**
+	 * Discord's Gift base URL.
+	 * @default 'https://discord.gift'
+	 */
+	giftUrl: string;
 }
+
+type Payload<T extends RouteType[keyof RouteType]> = {
+	[K in keyof T as K extends 'p' ? 'json' : K extends 'q' ? 'query' : never]: T[K];
+};
 
 export class HttpManager {
 	private readonly handlers = new Collection<string, RequestHandler>();
 	public readonly hashes = new Collection<string, string>();
 	public readonly dot: Got;
-	public delay?: Promise<void>;
+	public delay: Promise<void> | undefined = undefined;
 	public reset = -1;
 
 	public constructor(public readonly client: BaseClient, public readonly options: HttpOptions) {
 		if (this.options.sweepInterval > 0) {
-			client.setInterval(
+			setInterval(
 				() => this.handlers.sweep((handler) => handler.inactive && !void this.hashes.delete(handler.id)),
 				this.options.sweepInterval,
 			);
 		}
 
 		this.dot = got.extend({
-			prefixUrl: this.options.api,
+			prefixUrl: `${this.options.apiUrl}/v${APIVersion}`,
 			timeout: this.options.requestTimeout,
 			http2: this.options.http2,
-			agent: {
-				https: new HttpsAgent({ keepAlive: true }),
-				http2: new Http2Agent(),
-			},
+			agent: this.options.http2 ? { http2: new Http2Agent() } : { https: new HttpsAgent({ keepAlive: true }) },
 			headers: {
 				'user-agent': UserAgent,
 			},
@@ -121,56 +133,57 @@ export class HttpManager {
 		return `${this.client.tokenType} ${this.client.token}`;
 	}
 
-	public request<T extends StaticRoute<any, undefined> | DynamicRoute<any, undefined>>(
-		method: Method,
+	public request<
+		T extends StaticRoute | DynamicRoute,
+		M extends T extends StaticRoute<infer R> | DynamicRoute<infer R> ? keyof R : never,
+		R = T extends StaticRoute<infer D> | DynamicRoute<infer D> ? D[M] : never,
+	>(
 		route: T,
-		payload?: undefined,
-		options?: RequestOptions,
-	): Promise<RouteResult<T>>;
-	public request<T extends StaticRoute<any, undefined> | DynamicRoute<any, undefined>>(
-		method: Method,
+		method: M,
+		...args: keyof Payload<R> extends never
+			? [payload?: undefined, options?: RequestOptions]
+			: [payload: Payload<R>, options?: RequestOptions]
+	): Promise<'r' extends keyof R ? R['r'] : void>;
+	public request<
+		T extends StaticRoute | DynamicRoute,
+		M extends T extends StaticRoute<infer R> | DynamicRoute<infer R> ? keyof R : never,
+	>(
 		route: T,
-		payload: RoutePayload<T>,
-		options?: RequestOptions,
-	): Promise<RouteResult<T>>;
-	public request<T extends StaticRoute<any, undefined> | DynamicRoute<any, undefined>>(
-		method: Method,
-		route: T,
+		method: M,
 		payload?: RequestPayload,
 		options?: RequestOptions,
-	): Promise<RouteResult<T>> {
+	): T extends StaticRoute<infer R> | DynamicRoute<infer R>
+		? Promise<'r' extends keyof R[M] ? R[M]['r'] : void>
+		: never {
 		const dotOptions: OptionsOfUnknownResponseBody = {
 			searchParams: payload?.query,
 			headers: {
 				Authorization: options?.auth ?? true ? this.auth : undefined,
 				'X-Audit-Log-Reason': options?.reason && encodeURIComponent(options.reason),
-				...(options?.headers || {}),
+				...(options?.headers ?? {}),
 			},
 			method,
 		};
 
 		const attachments = payload?.attachments;
 		if (attachments?.length) {
-			const fd = new FormData();
+			const fd = (dotOptions.body = new FormData());
+
 			for (const filename in attachments) {
-				fd.append(filename, attachments[filename] as any, { filename });
+				fd.append(filename, attachments[filename], filename);
 			}
 			if (payload!.json) {
-				fd.append('payload_json', JSON.stringify(payload!.json));
+				fd.append('payload_json', JSON.stringify(payload!.json), { contentType: 'application/json' });
 			}
-			dotOptions.headers = { ...dotOptions.headers, ...fd.headers };
-			dotOptions.body = fd.stream;
-			// eslint-disable-next-line eqeqeq
-		} else if (payload?.json != undefined) {
+		} else if (payload?.json !== undefined) {
 			dotOptions.json = payload.json;
 		}
-
 		return this.queueRequest(route, dotOptions);
 	}
 
-	private queueRequest(route: string | DynamicRoute, dotOptions: OptionsOfUnknownResponseBody): Promise<any> {
+	private queueRequest(route: string | DynamicRoute, dotOptions: OptionsOfUnknownResponseBody): any {
 		let finalRoute: string;
-		let majorParameter: DynamicRoute['majorParameter'] = 'global';
+		let majorParameter = 'global';
 
 		if (typeof route === 'string') {
 			dotOptions.url = finalRoute = route;
@@ -179,23 +192,24 @@ export class HttpManager {
 			finalRoute = route.bucketRoute.join('');
 			majorParameter = route.majorParameter;
 
-			if (dotOptions.method === 'delete' && route.bucketRoute[2] === '/messages/') {
-				const id = Snowflake.deconstruct(route.bucketRoute[3])!;
-				if (Date.now() - id.timestamp > 1000 * 60 * 60 * 24 * 14) {
-					finalRoute += '/:old-message';
-				}
+			if (
+				dotOptions.method === 'delete' &&
+				route.bucketRoute[2] === '/messages/' &&
+				Date.now() - getTimestamp(route.messageId!) > 1_209_600_000
+			) {
+				finalRoute += '/:exc';
 			}
 		}
 
-		const hash = this.hashes.get(`${dotOptions.method}:${finalRoute}`) ?? `${dotOptions.method}-${finalRoute}`;
+		const hash = this.hashes.get(`${dotOptions.method}:${finalRoute}`) ?? `${dotOptions.method}:${finalRoute}`;
 		const handler =
 			this.handlers.get(`${majorParameter}:${hash}`) ?? this.createHandler(hash, majorParameter, finalRoute);
 
 		return handler.push(dotOptions);
 	}
 
-	private createHandler(hash: string, majorParameter: DynamicRoute['majorParameter'], bucketRoute: string) {
-		const handler = new RequestHandler(this, hash, bucketRoute, `${majorParameter}:${hash}` as const);
+	private createHandler(hash: string, majorParameter: string, bucketRoute: string) {
+		const handler = new RequestHandler(this, hash, bucketRoute, majorParameter);
 		this.handlers.set(handler.id, handler);
 		return handler;
 	}

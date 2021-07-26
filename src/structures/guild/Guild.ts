@@ -1,5 +1,5 @@
 import Collection from '@discordjs/collection';
-import {
+import type {
 	APIGuild,
 	APIPartialGuild,
 	GatewayPresenceUpdate,
@@ -10,10 +10,9 @@ import {
 	GuildPremiumTier,
 	GuildSystemChannelFlags,
 	GuildVerificationLevel,
-	Snowflake,
-} from 'discord-api-types';
-import { Client } from '../../clients';
-import { deconstruct } from '../../utils/Snowflake';
+} from 'discord-api-types/v8';
+import { Client, Snowflake } from '../..';
+import { getTimestamp } from '../../utils/snowflake';
 import { GuildChannel } from '../channel/GuildChannel';
 import { GuildEmoji } from '../emoji/GuildEmoji';
 import { GuildMember } from '../guild/GuildMember';
@@ -32,7 +31,7 @@ interface GuildWelcomeScreenChannel {
 	emojiName?: string;
 }
 
-function isAPIGuild(data: any): data is APIGuild {
+function isApiGuild(data: APIGuild | APIPartialGuild): data is APIGuild {
 	return 'description' in data;
 }
 
@@ -108,10 +107,10 @@ export class Guild {
 				emojiName: welcomeChannel.emoji_name ?? undefined,
 			})),
 		};
-		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdTimestamp = getTimestamp(this.id);
 		this.createdAt = new Date(this.createdTimestamp);
 
-		if (isAPIGuild(data)) {
+		if (isApiGuild(data)) {
 			if (data.members) {
 				for (const member of data.members) {
 					this.members.set(member.user!.id, new GuildMember(this, member));

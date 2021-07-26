@@ -1,7 +1,7 @@
 import Collection from '@discordjs/collection';
-import { APITeam, Snowflake } from 'discord-api-types';
-import { Client } from '../../clients';
-import { deconstruct } from '../../utils/Snowflake';
+import type { APITeam } from 'discord-api-types/v8';
+import type { Snowflake, Client } from '../..';
+import { getTimestamp } from '../../utils/snowflake';
 import { TeamMember } from './TeamMember';
 
 export class Team {
@@ -24,7 +24,7 @@ export class Team {
 		this.icon = data.icon ?? undefined;
 		this.id = data.id;
 		this.ownerUserId = data.owner_user_id;
-		this.createdTimestamp = deconstruct(this.id)!.timestamp;
+		this.createdTimestamp = getTimestamp(this.id);
 		this.createdAt = new Date(this.createdTimestamp);
 	}
 }

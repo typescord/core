@@ -1,4 +1,5 @@
-import { APIChannel, Snowflake } from 'discord-api-types';
+import type { APIChannel } from 'discord-api-types/v8';
+import type { Snowflake } from '../../..';
 import { DMChannel } from './DMChannel';
 
 export class GroupeDMChannel extends DMChannel {
